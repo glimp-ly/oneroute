@@ -8,8 +8,13 @@ Repositorio unificado del proyecto **RutaCompartida (OneRoute)**: aplicación m�
 
 ```text
 oneroute/
+├── AGENTS.md         # Reglas globales para agentes de IA y flujo del equipo
+├── CLAUDE.md         # Puntero de compatibilidad hacia AGENTS.md y .agents/skills/
+├── .agents/skills/   # Workflows reutilizables bajo demanda para agentes
 ├── android/          # App movil Kotlin + Jetpack Compose (abrir esta subcarpeta en Android Studio)
+│   └── AGENTS.md     # Reglas especificas para pantallas, recursos y builds Android
 ├── backend/          # Esquema SQL, seeds, Docker Compose y backend modular Go
+│   ├── AGENTS.md     # Reglas especificas para modulos Go, shared/ y PostGIS
 │   ├── db_rutaCompartida.sql
 │   ├── seed_bd.sql
 │   ├── seed_dev.sql
@@ -51,6 +56,8 @@ cd android
 ---
 
 ## Documentacion tecnica y trabajo en paralelo
+
+Para alinear automaticamente a cualquier agente de codigo (Antigravity, Claude Code, Codex, etc.) con el flujo del equipo, la raiz y las carpetas `android/` y `backend/` incluyen archivos `AGENTS.md`, `CLAUDE.md` y workflows reutilizables en `.agents/skills/`.
 
 Todo el equipo (6 integrantes: Lider en `backend/internal/shared/` + 1 modulo por persona) y los agentes de codigo deben consultar primero la carpeta `contexto_OR/`:
 
