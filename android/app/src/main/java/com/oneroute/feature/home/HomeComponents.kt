@@ -63,8 +63,8 @@ internal fun AvailableTripCard(
                     RatingLabel(trip.driver.rating, suffix = "• ${trip.driver.totalTrips} viajes")
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("$${trip.price}", style = MaterialTheme.typography.headlineSmall, color = PrimaryBlue)
-                    Text("MXN / lugar", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                    Text("S/ ${trip.price}", style = MaterialTheme.typography.headlineSmall, color = PrimaryBlue)
+                    Text("PEN / lugar", style = MaterialTheme.typography.bodySmall, color = TextMuted)
                 }
             }
 

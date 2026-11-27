@@ -159,7 +159,7 @@ fun CancelTripScreen(tripId: String, state: AppState, nav: AppNavigator) {
                                     Text("${trip?.dateTag ?: "Hoy"}, ${trip?.departure ?: "18:30"} hrs", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                 }
                             }
-                            Text("$$price.00 MXN", style = MaterialTheme.typography.titleMedium, color = PrimaryBlue)
+                            Text("S/ $price.00 PEN", style = MaterialTheme.typography.titleMedium, color = PrimaryBlue)
                         }
                         Surface(color = CardSurface, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -224,7 +224,7 @@ fun CancelTripScreen(tripId: String, state: AppState, nav: AppNavigator) {
                         Column {
                             Text("Política de Reembolso", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
                             Text(
-                                "Reembolso inmediato de $$price.00 MXN a tu tarjeta terminada en ••8912 (1-2 días hábiles según tu banco emisor).",
+                                "Reembolso inmediato de S/ $price.00 PEN a tu tarjeta terminada en ••8912 (1-2 días hábiles según tu banco emisor).",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = TextSecondary
                             )

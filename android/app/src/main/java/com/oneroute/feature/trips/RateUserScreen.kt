@@ -81,7 +81,7 @@ private val ratingTags = listOf(
     "Mascota bienvenida"
 )
 
-private val tipOptions = listOf("No", "+$15", "+$25", "+$50", "Otro")
+private val tipOptions = listOf("No", "+S/ 5", "+S/ 10", "+S/ 20", "Otro")
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -96,9 +96,9 @@ fun RateUserScreen(route: Route.RateUser, state: AppState, nav: AppNavigator) {
     var anonymous by rememberSaveable { mutableStateOf(false) }
 
     val tipAmount = when (tipIndex) {
-        1 -> 15
-        2 -> 25
-        3 -> 50
+        1 -> 5
+        2 -> 10
+        3 -> 20
         4 -> customTip.toIntOrNull() ?: 0
         else -> 0
     }
@@ -199,7 +199,7 @@ fun RateUserScreen(route: Route.RateUser, state: AppState, nav: AppNavigator) {
                             AppTextField(
                                 value = customTip,
                                 onValueChange = { if (it.all(Char::isDigit)) customTip = it },
-                                label = "Monto personalizado (MXN)",
+                                label = "Monto personalizado (PEN)",
                                 keyboardType = KeyboardType.Number
                             )
                         }
@@ -240,7 +240,7 @@ fun RateUserScreen(route: Route.RateUser, state: AppState, nav: AppNavigator) {
 
             item {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    val buttonText = if (tipAmount > 0) "Enviar calificación y propina ($$tipAmount MXN)" else "Enviar calificación"
+                    val buttonText = if (tipAmount > 0) "Enviar calificación y propina (S/ $tipAmount PEN)" else "Enviar calificación"
                     PrimaryPillButton(
                         text = buttonText,
                         icon = Icons.AutoMirrored.Rounded.Send,

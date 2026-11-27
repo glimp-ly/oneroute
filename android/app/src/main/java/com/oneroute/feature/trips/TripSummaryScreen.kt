@@ -119,7 +119,7 @@ fun TripSummaryScreen(tripId: String, state: AppState, nav: AppNavigator) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        MetricCard(Icons.Rounded.Savings, "$145.00", "Ahorro vs. Taxi/VTC", "-68%", Modifier.weight(1f))
+                        MetricCard(Icons.Rounded.Savings, "S/ 45.00", "Ahorro vs. Taxi/VTC", "-68%", Modifier.weight(1f))
                         MetricCard(Icons.Rounded.Eco, "3.4 kg", "CO₂ evitado hoy", "Huella", Modifier.weight(1f), eco = true)
                     }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -209,9 +209,9 @@ fun TripSummaryScreen(tripId: String, state: AppState, nav: AppNavigator) {
                             }
                         }
                         TonalPillButton(
-                            text = "Descargar recibo fiscal digital (CFDI / PDF)",
+                            text = "Descargar comprobante electrónico (PDF)",
                             icon = Icons.Rounded.Download,
-                            onClick = { Toast.makeText(context, "Descargando recibo CFDI/PDF...", Toast.LENGTH_SHORT).show() }
+                            onClick = { Toast.makeText(context, "Descargando comprobante electrónico...", Toast.LENGTH_SHORT).show() }
                         )
                     }
                 }

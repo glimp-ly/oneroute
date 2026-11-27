@@ -232,7 +232,7 @@ fun HomeScreen(state: AppState, nav: AppNavigator) {
                         IconBubble(Icons.Rounded.Shield, size = 40, container = SoftContainer, tint = TextPrimary)
                         Column(Modifier.weight(1f)) {
                             Text("Comunidad Segura", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-                            Text("Perfiles verificados con INE y reseñas", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            Text("Perfiles verificados con DNI y reseñas", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                         }
                         Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = TextMuted)
                     }

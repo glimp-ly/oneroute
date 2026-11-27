@@ -128,7 +128,7 @@ fun PublishConfirmationScreen(tripCode: String, state: AppState, nav: AppNavigat
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Text("GANANCIA PROYECTADA", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                                Text("Hasta $$price MXN", style = MaterialTheme.typography.headlineSmall, color = PrimaryBlue)
+                                Text("Hasta S/ $price PEN", style = MaterialTheme.typography.headlineSmall, color = PrimaryBlue)
                                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Icon(Icons.Rounded.AirlineSeatReclineNormal, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
                                     Text(trip?.seatInfo ?: "3 asientos disponibles", style = MaterialTheme.typography.bodySmall, color = TextSecondary)

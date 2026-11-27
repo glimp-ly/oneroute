@@ -182,7 +182,7 @@ fun FaqArticleDetailScreen(articleId: String, state: AppState, nav: AppNavigator
                     AppCard(container = SoftContainer, corner = 18) {
                         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             BenefitBullet(Icons.Rounded.CheckCircle, "100% de reembolso íntegro sin demoras.")
-                            BenefitBullet(Icons.Rounded.AccountBalanceWallet, "+$30 MXN de bono de cortesía acreditados en tu billetera.")
+                            BenefitBullet(Icons.Rounded.AccountBalanceWallet, "+S/ 10 PEN de bono de cortesía acreditados en tu billetera.")
                             BenefitBullet(Icons.Rounded.Bolt, "Prioridad inteligente en reservas de rutas similares.")
                         }
                     }
@@ -209,7 +209,7 @@ fun FaqArticleDetailScreen(articleId: String, state: AppState, nav: AppNavigator
                                     Text("Tarjeta Bancaria", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
                                 }
                                 Text("1 a 2 días hábiles", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
-                                Text("BBVA, Banorte, Santander, Hey Banco.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text("BCP, Interbank, BBVA, Scotiabank.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                             }
                         }
                     }
@@ -222,7 +222,7 @@ fun FaqArticleDetailScreen(articleId: String, state: AppState, nav: AppNavigator
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     ScenarioRow(Icons.Rounded.Schedule, "> 60 min previos", "Cancelación voluntaria", "100%")
                     ScenarioRow(Icons.Rounded.Schedule, "< 60 min previos", "Cancelación tardía", "50%")
-                    ScenarioRow(Icons.Rounded.DirectionsCar, "Conductor cancela", "Incidencia de servicio", "100% + $30", highlight = true)
+                    ScenarioRow(Icons.Rounded.DirectionsCar, "Conductor cancela", "Incidencia de servicio", "100% + S/ 10", highlight = true)
                 }
             }
 
@@ -262,7 +262,7 @@ fun FaqArticleDetailScreen(articleId: String, state: AppState, nav: AppNavigator
                 Text("Artículos relacionados", style = MaterialTheme.typography.titleMedium, color = TextPrimary)
                 Spacer(Modifier.height(8.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    RelatedRow(Icons.Rounded.Description, "¿Cómo solicitar la factura CFDI de ...") { nav.navigate(Route.SupportTicketChat("TK-9042")) }
+                    RelatedRow(Icons.Rounded.Description, "¿Cómo solicitar el comprobante electrónico de ...") { nav.navigate(Route.SupportTicketChat("TK-9042")) }
                     RelatedRow(Icons.Rounded.LocationOn, "¿Qué pasa si el pasajero no llega al...") { nav.navigate(Route.FaqArticleDetail("faq2")) }
                 }
             }

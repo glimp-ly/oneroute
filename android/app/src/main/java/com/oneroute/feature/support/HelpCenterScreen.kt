@@ -166,7 +166,7 @@ fun HelpCenterScreen(state: AppState, nav: AppNavigator) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             StatusPill("Ticket #TK-9042", container = PrimaryBlue, content = Color.White)
-                            Text("Facturación CFDI", style = MaterialTheme.typography.bodySmall, color = TextSecondary, modifier = Modifier.weight(1f))
+                            Text("Comprobante electrónico", style = MaterialTheme.typography.bodySmall, color = TextSecondary, modifier = Modifier.weight(1f))
                             Text("• En revisión", style = MaterialTheme.typography.labelSmall, color = PrimaryBlue)
                         }
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {

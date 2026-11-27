@@ -142,7 +142,7 @@ fun TripHistoryScreen(state: AppState, nav: AppNavigator) {
                             StatusPill("Nivel Eco Pro", container = PrimaryContainer, content = PrimaryBlueDark)
                         }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            KpiBox(Icons.Rounded.AccountBalanceWallet, "$585", "MXN ahorrados", Modifier.weight(1f))
+                            KpiBox(Icons.Rounded.AccountBalanceWallet, "S/ 585", "PEN ahorrados", Modifier.weight(1f))
                             KpiBox(Icons.Rounded.Route, "8", "Viajes hechos", Modifier.weight(1f))
                             KpiBox(Icons.Rounded.Eco, "24.5", "kg CO₂ menos", Modifier.weight(1f), eco = true)
                         }
@@ -243,8 +243,8 @@ private fun HistoryTripCard(
                 StatusPill("${trip.statusLabel} • ${trip.dateLabel}", container = pillBg, content = pillFg, icon = pillIcon)
                 Text(
                     text = when (trip.status) {
-                        HistoryStatus.AS_DRIVER -> "+$${trip.amount}.00 MXN"
-                        else -> "$${trip.amount}.00 MXN"
+                        HistoryStatus.AS_DRIVER -> "+S/ ${trip.amount}.00 PEN"
+                        else -> "S/ ${trip.amount}.00 PEN"
                     },
                     style = MaterialTheme.typography.titleMedium.copy(
                         textDecoration = if (trip.status == HistoryStatus.CANCELLED) TextDecoration.LineThrough else TextDecoration.None

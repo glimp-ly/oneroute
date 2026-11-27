@@ -186,7 +186,7 @@ fun ProfileScreen(state: AppState, nav: AppNavigator) {
                 Spacer(Modifier.height(8.dp))
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     item {
-                        TrustBadgeCard(Icons.Rounded.VerifiedUser, "Identidad INE", "Validada oficialmente", PrimaryBlue, PrimaryContainer)
+                        TrustBadgeCard(Icons.Rounded.VerifiedUser, "Identidad DNI", "Validada oficialmente", PrimaryBlue, PrimaryContainer)
                     }
                     item {
                         TrustBadgeCard(Icons.Rounded.MilitaryTech, "Top Conductor", "+200 viajes 5★", WarningAmber, WarningContainer)

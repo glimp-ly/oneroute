@@ -78,7 +78,7 @@ import com.oneroute.core.theme.TextSecondary
 import com.oneroute.data.model.ChatMessage
 import com.oneroute.data.model.ChatMessageType
 
-private val supportQuickReplies = listOf("Sí, por favor", "¿Puedo cambiar mi CLABE?", "Necesito el comprobante")
+private val supportQuickReplies = listOf("Sí, por favor", "¿Puedo cambiar mi CCI?", "Necesito el comprobante")
 
 @Composable
 fun SupportTicketChatScreen(ticketId: String, state: AppState, nav: AppNavigator) {
@@ -187,7 +187,7 @@ fun SupportTicketChatScreen(ticketId: String, state: AppState, nav: AppNavigator
                         Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
                             Column(Modifier.weight(1f)) {
                                 Text("Ticket #$ticketId", style = MaterialTheme.typography.labelSmall, color = PrimaryBlue)
-                                Text("Consulta sobre Acreditación SPEI", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                                Text("Consulta sobre Acreditación CCI", style = MaterialTheme.typography.bodySmall, color = TextPrimary)
                             }
                             StatusPill("~4 min", container = CardSurface, content = PrimaryBlueDark, icon = Icons.Rounded.Schedule)
                         }
@@ -236,7 +236,7 @@ private fun SupportBubble(msg: ChatMessage) {
                 val date = parts.getOrElse(1) { "23 Octubre • 08:15 hrs" }
                 val from = parts.getOrElse(2) { "Condesa" }
                 val to = parts.getOrElse(3) { "Santa Fe" }
-                val amount = parts.getOrElse(4) { "$195.00" }
+                val amount = parts.getOrElse(4) { "S/ 72.00" }
                 AppCard(corner = 20, modifier = Modifier.widthIn(max = 290.dp)) {
                     Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -247,7 +247,7 @@ private fun SupportBubble(msg: ChatMessage) {
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(amount, style = MaterialTheme.typography.titleMedium, color = PrimaryBlue)
-                                Text("MXN", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                Text("PEN", style = MaterialTheme.typography.labelSmall, color = TextMuted)
                             }
                         }
                         Surface(color = SoftContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {

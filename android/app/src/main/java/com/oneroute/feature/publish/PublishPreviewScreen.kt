@@ -142,7 +142,7 @@ fun PublishPreviewScreen(state: AppState, nav: AppNavigator) {
                             }
                         }
 
-                        Text("Depósito directo: CLABE terminación ••4109", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                        Text("Depósito directo: Cuenta CCI terminación ••4109", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                     }
                 }
             }
