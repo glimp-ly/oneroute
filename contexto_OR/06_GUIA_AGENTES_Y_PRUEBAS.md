@@ -9,9 +9,9 @@ Este documento define las reglas operativas para que **6 integrantes** (y asiste
 Antes de implementar una tarea en un módulo:
 1. Leer `00_README_CONTEXTO.md`, `01_ARQUITECTURA_Y_SHARED.md`, la sección de tu módulo en `03_MODULOS_Y_DIVISION_EQUIPO.md` y sus endpoints en `04_CONTRATO_API_Y_TIEMPO_REAL.md`.
 2. Verificar qué **archivos puedes modificar**:
-   - ✅ Libremente: todo dentro de `internal/modules/<tu_modulo>/` y tus archivos de tests `*_test.go`.
-   - ⚠️ Con coordinación: `cmd/api/main.go` (solo para montar tus rutas si aún no están registradas).
-   - 🚫 **Prohibido editar directamente** sin PR aprobado por el líder: `internal/shared/*`, `migrations/*`, `docker-compose.yml`, `.env.example` y carpetas `internal/modules/<otro_modulo>/`.
+   - **Permitido libremente:** todo dentro de `internal/modules/<tu_modulo>/` y tus archivos de tests `*_test.go`.
+   - **Con coordinación:** `cmd/api/main.go` (solo para montar tus rutas si aún no están registradas).
+   - **Prohibido editar directamente** sin PR aprobado por el líder: `internal/shared/*`, `migrations/*`, `docker-compose.yml`, `.env.example` y carpetas `internal/modules/<otro_modulo>/`.
 3. **Nunca escribir SQL `INSERT/UPDATE/DELETE` contra tablas de otro módulo.** Si falta un método en `shared/contracts`, pedirlo al líder o proponerlo en un PR separado hacia `shared/contracts`.
 
 ---

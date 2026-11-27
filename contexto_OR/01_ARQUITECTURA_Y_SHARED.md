@@ -5,7 +5,7 @@
 ## 1. Estructura de carpetas del repositorio Backend (Go)
 
 ```text
-oneroute-backend/
+backend_oneroute/
 ├── cmd/
 │   └── api/
 │       └── main.go                  # Wiring: carga config, conecta DB/MinIO/OSRM, inicia Hub/Scheduler y monta los 6 módulos
