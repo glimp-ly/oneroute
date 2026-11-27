@@ -26,6 +26,8 @@ import com.onerouteandroid.oneroute.feature.publish.PublishConfirmationScreen
 import com.onerouteandroid.oneroute.feature.publish.PublishPreviewScreen
 import com.onerouteandroid.oneroute.feature.support.FaqArticleDetailScreen
 import com.onerouteandroid.oneroute.feature.support.HelpCenterScreen
+import com.onerouteandroid.oneroute.feature.support.EmergencyContactsScreen
+import com.onerouteandroid.oneroute.feature.support.SafetyReportsScreen
 import com.onerouteandroid.oneroute.feature.support.SupportTicketChatScreen
 import com.onerouteandroid.oneroute.feature.trips.ActiveTripScreen
 import com.onerouteandroid.oneroute.feature.trips.CancelTripScreen
@@ -97,10 +99,12 @@ private fun RouteContent(route: Route, state: AppState, nav: AppNavigator) {
         Route.WalletPayments -> WalletPaymentsScreen(state, nav)
         Route.VehicleRegistration -> VehicleRegistrationScreen(state, nav)
         Route.DocumentVerification -> DocumentVerificationScreen(state, nav)
+        Route.EmergencyContacts -> EmergencyContactsScreen(state, nav)
 
         Route.HelpCenter -> HelpCenterScreen(state, nav)
         is Route.FaqArticleDetail -> FaqArticleDetailScreen(route.articleId, state, nav)
         is Route.SupportTicketChat -> SupportTicketChatScreen(route.ticketId, state, nav)
+        is Route.SafetyReports -> SafetyReportsScreen(route.tripId, route.initialTab, state, nav)
     }
 }
 
@@ -117,6 +121,7 @@ private fun Route.skeletonVariant(): SkeletonVariant? = when (this) {
     is Route.MeetingPoint, is Route.ActiveTrip, is Route.LiveNavigation, is Route.TripSummary,
     Route.WalletPayments -> SkeletonVariant.DETAIL
     Route.TripHistory, Route.MessagesInbox, Route.Notifications,
-    Route.DocumentVerification, Route.HelpCenter -> SkeletonVariant.LIST
+    Route.DocumentVerification, Route.EmergencyContacts, Route.HelpCenter,
+    is Route.SafetyReports -> SkeletonVariant.LIST
     is Route.RideChat, is Route.SupportTicketChat -> SkeletonVariant.CHAT
 }

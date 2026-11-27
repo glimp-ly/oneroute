@@ -5,6 +5,7 @@ import com.onerouteandroid.oneroute.core.navigation.AppNavigator
 import com.onerouteandroid.oneroute.core.navigation.AppState
 import com.onerouteandroid.oneroute.core.navigation.Route
 import com.onerouteandroid.oneroute.data.model.HistoryStatus
+import com.onerouteandroid.oneroute.data.model.RideRequestStatus
 import com.onerouteandroid.oneroute.data.model.TripRole
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,46 +18,118 @@ class AppStateTest {
     private val state = AppState()
 
     @Test
-    fun bookTrip_addsScheduledTripAndConsumesSeat() {
-        val before = state.scheduledTrips.size
-        val seats = state.availableTrip("at2")!!.seatsLeft
+    fun requestAcceptAndConfirm_followsTwoStageHoldFlow() {
+        val beforeScheduled = state.scheduledTrips.size
+        val seatsBefore = state.availableTrip("at1")!!.seatsLeft
 
-        val booked = state.bookTrip("at2")
+        val req = state.requestTrip("at1", seats = 1)
+        assertNotNull(req)
+        assertEquals(RideRequestStatus.PENDIENTE, req!!.status)
+        // Pendiente aún no consume asientos
+        assertEquals(seatsBefore, state.availableTrip("at1")!!.seatsLeft)
 
+        assertTrue(state.acceptRideRequest(req.id))
+        assertEquals(RideRequestStatus.ACEPTADA_HOLD, state.rideRequests.first { it.id == req.id }.status)
+
+        val booked = state.confirmHeldRequest(req.id)
         assertNotNull(booked)
-        assertEquals(before + 1, state.scheduledTrips.size)
-        assertEquals(seats - 1, state.availableTrip("at2")!!.seatsLeft)
+        assertEquals(beforeScheduled + 1, state.scheduledTrips.size)
+        assertEquals(seatsBefore - 1, state.availableTrip("at1")!!.seatsLeft)
         assertEquals(TripRole.PASSENGER, booked!!.role)
     }
 
     @Test
-    fun bookTrip_withoutSeatsReturnsNull() {
-        assertNotNull(state.bookTrip("at3"))
-        assertNull(state.bookTrip("at3"))
-        assertNull(state.bookTrip("unknown"))
+    fun autoAcceptTrip_startsDirectlyInHoldAndCancelsOtherRequestsOnConfirm() {
+        val manualReq = state.requestTrip("at1", seats = 1)!!
+        val autoReq = state.requestTrip("at2", seats = 1)!!
+
+        assertEquals(RideRequestStatus.ACEPTADA_HOLD, autoReq.status)
+        assertTrue(autoReq.autoAccepted)
+
+        assertNotNull(state.confirmHeldRequest(autoReq.id))
+        assertEquals(RideRequestStatus.CANCELADA, state.rideRequests.first { it.id == manualReq.id }.status)
     }
 
     @Test
-    fun publishDraftTrip_addsDriverTripAndResetsDraft() {
-        state.updateDraft { it.copy(seats = 2, pricePerSeat = 70) }
+    fun voluntaryCancelBeforeResponse_doesNotConsumeAttempt_andMaxThreeAttemptsEnforced() {
+        val r1 = state.requestTrip("at1")!!
+        assertTrue(state.cancelPendingRequestByPassenger(r1.id))
+        assertEquals(0, state.attemptsUsedForTrip("at1"))
+
+        repeat(3) {
+            val r = state.requestTrip("at1")!!
+            assertTrue(state.rejectRideRequest(r.id, "Sin cupo"))
+        }
+        assertEquals(3, state.attemptsUsedForTrip("at1"))
+        assertNull(state.requestTrip("at1"))
+    }
+
+    @Test
+    fun publishDraftTrip_addsDriverTripWithConductorPriceAndResetsDraft() {
+        state.updateDraft { it.copy(seats = 2, pricePerSeat = 35) }
 
         val published = state.publishDraftTrip()
 
-        assertEquals(TripRole.DRIVER, published.role)
-        assertEquals(140, published.price)
+        assertNotNull(published)
+        assertEquals(TripRole.DRIVER, published!!.role)
+        assertEquals(70, published.price)
         assertTrue(state.scheduledTrips.any { it.id == published.id })
         assertEquals(3, state.tripDraft.seats)
     }
 
     @Test
-    fun cancelScheduledTrip_movesToHistoryAndRefundsPassenger() {
-        val balance = state.walletBalance
+    fun threeWallets_withdrawFromEarnings_rechargeCommissionAndRefundToPassenger() {
+        val earningsBefore = state.earningsWalletBalance
+        val passengerBefore = state.passengerWalletBalance
+        val commissionBefore = state.commissionWalletBalance
+
+        assertFalse(state.withdrawToBank(0.0))
+        assertFalse(state.withdrawToBank(earningsBefore + 1))
+        assertTrue(state.withdrawToBank(100.0))
+        assertEquals(earningsBefore - 100, state.earningsWalletBalance, 0.001)
+
+        assertTrue(state.rechargeCommissionWallet(25.0))
+        assertEquals(commissionBefore + 25.0, state.commissionWalletBalance, 0.001)
 
         state.cancelScheduledTrip("st1", "Cambio de planes")
-
         assertNull(state.scheduledTrip("st1"))
         assertEquals(HistoryStatus.CANCELLED, state.historyTrips.first().status)
-        assertEquals(balance + 65, state.walletBalance, 0.001)
+        assertEquals(passengerBefore + 24.0, state.passengerWalletBalance, 0.001)
+    }
+
+    @Test
+    fun modifyTrip_enforcesSinglePickupDestinationChange_and24hCreditOnSeatReduction() {
+        assertTrue(state.modifyTripPickup("st1", "Parque Kennedy cdra. 2"))
+        assertFalse(state.modifyTripPickup("st1", "Segundo intento"))
+
+        assertTrue(state.modifyTripDestination("st1", "Av. Rivera Navarrete 120", -4))
+        assertFalse(state.modifyTripDestination("st1", "Segundo destino", -2))
+
+        val r = state.requestTrip("at1", seats = 2)!!
+        state.acceptRideRequest(r.id)
+        val booked = state.confirmHeldRequest(r.id)!!
+        assertTrue(state.modifyTripSeats(booked.id, 1, paidAlready = true))
+        assertTrue(state.pendingCredits.any { it.tripId == booked.id && it.availableInHours == 24 })
+    }
+
+    @Test
+    fun earlyFinish_noShow_trackingLink_andEmergencyContacts() {
+        val link = state.generateTrackingLink("st1")
+        assertTrue(link.startsWith("https://"))
+        state.revokeTrackingLink("st1")
+        assertNull(state.scheduledTrip("st1")!!.trackingShareUrl)
+
+        val passengerBefore = state.passengerWalletBalance
+        assertTrue(state.finishTripEarly("st1", "Av. Javier Prado 400", 16))
+        assertEquals(passengerBefore + 8.0, state.passengerWalletBalance, 0.001)
+
+        assertTrue(state.declareNoShow("st2", "No llegó en 5 min"))
+        assertNull(state.scheduledTrip("st2"))
+
+        val contactsBefore = state.emergencyContacts.size
+        assertTrue(state.addEmergencyContact("Ana Torres", "Amiga", "+51 912 345 678", true))
+        assertEquals(contactsBefore + 1, state.emergencyContacts.size)
+        assertEquals("Ana Torres", state.emergencyContacts.first { it.isPrimary }.name)
     }
 
     @Test
@@ -88,16 +161,6 @@ class AppStateTest {
         assertTrue(state.unreadNotifications > 0)
         state.markAllNotificationsRead()
         assertEquals(0, state.unreadNotifications)
-    }
-
-    @Test
-    fun withdrawToBank_validatesAmount() {
-        val balance = state.walletBalance
-
-        assertFalse(state.withdrawToBank(0.0))
-        assertFalse(state.withdrawToBank(balance + 1))
-        assertTrue(state.withdrawToBank(100.0))
-        assertEquals(balance - 100, state.walletBalance, 0.001)
     }
 }
 

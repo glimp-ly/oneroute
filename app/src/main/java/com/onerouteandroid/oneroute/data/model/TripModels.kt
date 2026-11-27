@@ -29,7 +29,10 @@ data class AvailableTrip(
     val price: Int,
     val seatsLeft: Int,
     val via: String,
-    val perks: List<String>
+    val perks: List<String>,
+    val autoAccept: Boolean = false,
+    val gpsReliable: Boolean = true,
+    val distanceKm: Double = 14.2
 )
 
 enum class TripRole { PASSENGER, DRIVER }
@@ -51,7 +54,17 @@ data class ScheduledTrip(
     val driver: Driver? = null,
     val boardingCode: String? = null,
     val paymentCard: String? = null,
-    val passengersSummary: String? = null
+    val passengersSummary: String? = null,
+    val seatsCount: Int = 1,
+    val pickupChangesUsed: Int = 0,
+    val destinationChangesUsed: Int = 0,
+    val earlyFinished: Boolean = false,
+    val driverArrivedAtMillis: Long? = null,
+    val waitExtendedMinutes: Int = 0,
+    val trackingShareUrl: String? = null,
+    val noShowMarked: Boolean = false,
+    val acceptsNewBookings: Boolean = true,
+    val autoAccept: Boolean = false
 )
 
 enum class HistoryStatus { COMPLETED, CANCELLED, AS_DRIVER }
@@ -84,7 +97,39 @@ data class TripDraft(
     val luggage: String = "Medio (Mochila / Maletín)",
     val rules: Set<String> = setOf("No fumar", "Aire acondicionado"),
     val pickupPoint: String = "Av. México 123",
-    val pickupReference: String = "Frente al quiosco del Parque México"
+    val pickupReference: String = "Frente al quiosco del Parque México",
+    val acceptsNewBookings: Boolean = true,
+    val autoAccept: Boolean = false,
+    val distanceKm: Double = 14.8
 ) {
     val earnings: Int get() = seats * pricePerSeat
 }
+
+enum class RideRequestStatus(val label: String) {
+    PENDIENTE("Esperando conductor"),
+    ACEPTADA_HOLD("Retención activa (60 s)"),
+    CONFIRMADA("Confirmada"),
+    RECHAZADA("Rechazada"),
+    EXPIRADA("Expirada"),
+    CANCELADA("Cancelada")
+}
+
+data class RideRequest(
+    val id: String,
+    val tripId: String,
+    val tripTitle: String,
+    val passengerName: String,
+    val driverName: String,
+    val pickupPoint: String,
+    val destinationPoint: String,
+    val seatsRequested: Int,
+    val estimatedPrice: Int,
+    val paymentMethod: String,
+    val status: RideRequestStatus,
+    val attemptsUsed: Int,
+    val maxAttempts: Int = 3,
+    val isIncomingForDriver: Boolean,
+    val autoAccepted: Boolean = false,
+    val remainingSeconds: Int = 60,
+    val rejectionReason: String? = null
+)

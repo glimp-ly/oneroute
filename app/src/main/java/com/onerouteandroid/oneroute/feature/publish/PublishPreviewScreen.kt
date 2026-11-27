@@ -90,13 +90,16 @@ fun PublishPreviewScreen(state: AppState, nav: AppNavigator) {
                         onClick = { nav.back() }
                     )
                     PrimaryPillButton(
-                        text = "Publicar viaje ahora",
+                        text = if (state.canPublishTrip()) "Publicar viaje ahora" else "Recarga comisiones primero",
                         trailingIcon = Icons.Rounded.RocketLaunch,
+                        enabled = state.canPublishTrip(),
                         modifier = Modifier.weight(1.6f),
                         onClick = {
                             val published = state.publishDraftTrip()
-                            nav.resetTo(Route.Home)
-                            nav.navigate(Route.PublishConfirmation(published.id))
+                            if (published != null) {
+                                nav.resetTo(Route.Home)
+                                nav.navigate(Route.PublishConfirmation(published.id))
+                            }
                         }
                     )
                 }
@@ -124,17 +127,17 @@ fun PublishPreviewScreen(state: AppState, nav: AppNavigator) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Column {
                                 Text("Tus ganancias estimadas", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                                Text("$${draft.earnings}.00 MXN", style = MaterialTheme.typography.headlineMedium, color = PrimaryBlue)
-                                Text("Basado en ${draft.seats} asientos ocupados a $${draft.pricePerSeat}.00 c/u", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                                Text("S/ ${draft.earnings}.00 PEN", style = MaterialTheme.typography.headlineMedium, color = PrimaryBlue)
+                                Text("Basado en ${draft.seats} asientos a S/ ${draft.pricePerSeat}.00 (definido por ti)", style = MaterialTheme.typography.bodySmall, color = TextMuted)
                             }
                             IconBubble(Icons.Rounded.Payments, size = 48, container = PrimaryBlue, tint = Color.White)
                         }
 
                         Surface(color = CardSurface, shape = RoundedCornerShape(18.dp), modifier = Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                                BreakdownRow(Icons.Rounded.Payments, "Tarifa base conductor", "${draft.seats} × $${draft.pricePerSeat}.00 MXN")
-                                BreakdownRow(Icons.Rounded.Verified, "Comisión de plataforma", "0% (Primeros 5 viajes)")
-                                BreakdownRow(Icons.Rounded.LocalGasStation, "Ahorro en combustible", "~60% recuperado")
+                                BreakdownRow(Icons.Rounded.Payments, "Tarifa definida por ti", "${draft.seats} × S/ ${draft.pricePerSeat}.00 PEN")
+                                BreakdownRow(Icons.Rounded.Verified, "Comisión de plataforma", "10% (según método de cobro)")
+                                BreakdownRow(Icons.Rounded.LocalGasStation, "Modo de aceptación", if (draft.autoAccept) "Automática (GPS confiable)" else "Manual (60 s)")
                                 BreakdownRow(Icons.Rounded.Eco, "Impacto ambiental", "~8.6 kg CO₂ evitados")
                             }
                         }

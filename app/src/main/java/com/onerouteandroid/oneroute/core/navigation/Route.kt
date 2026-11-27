@@ -35,8 +35,10 @@ sealed interface Route {
     data object WalletPayments : Route
     data object VehicleRegistration : Route
     data object DocumentVerification : Route
+    data object EmergencyContacts : Route
 
     data object HelpCenter : Route
     data class FaqArticleDetail(val articleId: String) : Route
     data class SupportTicketChat(val ticketId: String) : Route
+    data class SafetyReports(val tripId: String? = null, val initialTab: Int = 0) : Route
 }

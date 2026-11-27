@@ -21,15 +21,25 @@ import androidx.compose.material.icons.rounded.AirlineSeatReclineNormal
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Traffic
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -37,8 +47,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.onerouteandroid.oneroute.core.components.AppCard
+import com.onerouteandroid.oneroute.core.components.AppTextField
 import com.onerouteandroid.oneroute.core.components.AppTopBar
 import com.onerouteandroid.oneroute.core.components.AvatarBadge
+import com.onerouteandroid.oneroute.core.components.CounterStepper
 import com.onerouteandroid.oneroute.core.components.IconBubble
 import com.onerouteandroid.oneroute.core.components.MainTab
 import com.onerouteandroid.oneroute.core.components.MapOverlayPill
@@ -46,6 +58,7 @@ import com.onerouteandroid.oneroute.core.components.PrimaryPillButton
 import com.onerouteandroid.oneroute.core.components.RatingLabel
 import com.onerouteandroid.oneroute.core.components.RouteTimeline
 import com.onerouteandroid.oneroute.core.components.ScreenList
+import com.onerouteandroid.oneroute.core.components.SelectChip
 import com.onerouteandroid.oneroute.core.components.StatusPill
 import com.onerouteandroid.oneroute.core.components.StylizedMapCanvas
 import com.onerouteandroid.oneroute.core.components.TonalPillButton
@@ -54,6 +67,8 @@ import com.onerouteandroid.oneroute.core.navigation.AppState
 import com.onerouteandroid.oneroute.core.navigation.Route
 import com.onerouteandroid.oneroute.core.theme.CanvasBackground
 import com.onerouteandroid.oneroute.core.theme.CardSurface
+import com.onerouteandroid.oneroute.core.theme.DangerContainer
+import com.onerouteandroid.oneroute.core.theme.DangerRed
 import com.onerouteandroid.oneroute.core.theme.PrimaryBlue
 import com.onerouteandroid.oneroute.core.theme.PrimaryBlueDark
 import com.onerouteandroid.oneroute.core.theme.PrimaryContainer
@@ -61,12 +76,139 @@ import com.onerouteandroid.oneroute.core.theme.SoftContainer
 import com.onerouteandroid.oneroute.core.theme.TextMuted
 import com.onerouteandroid.oneroute.core.theme.TextPrimary
 import com.onerouteandroid.oneroute.core.theme.TextSecondary
+import com.onerouteandroid.oneroute.core.theme.WarningAmber
+import com.onerouteandroid.oneroute.core.theme.WarningContainer
+import com.onerouteandroid.oneroute.data.model.RideRequestStatus
+import com.onerouteandroid.oneroute.feature.trips.PassengerHoldConfirmationDialog
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TripDetailScreen(tripId: String, state: AppState, nav: AppNavigator) {
     val context = LocalContext.current
     val trip = state.availableTrip(tripId)
+
+    var showRequestSheet by remember { mutableStateOf(false) }
+    var pickupInput by remember(trip?.id) { mutableStateOf(trip?.originDetail ?: "") }
+    var destInput by remember(trip?.id) { mutableStateOf(trip?.destinationDetail ?: "") }
+    var seatsInput by remember { mutableIntStateOf(1) }
+    var selectedPayId by remember(state.selectedPaymentId) { mutableStateOf(state.selectedPaymentId) }
+    var activeRequestId by remember { mutableStateOf<String?>(null) }
+
+    val activeRequest = activeRequestId?.let { id -> state.rideRequests.firstOrNull { it.id == id } }
+    val attemptsUsed = trip?.let { state.attemptsUsedForTrip(it.id) } ?: 0
+
+    if (showRequestSheet && trip != null) {
+        AlertDialog(
+            onDismissRequest = { showRequestSheet = false },
+            title = { Text("Solicitar Tramo de Viaje") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        if (trip.autoAccept && trip.gpsReliable) "Aceptación automática disponible: pasarás directo a retención de 60 s."
+                        else "El conductor revisará tu solicitud y tendrá 60 s para responder.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondary
+                    )
+                    AppTextField(value = pickupInput, onValueChange = { pickupInput = it }, label = "Punto de recogida en ruta", leadingIcon = Icons.Rounded.LocationOn)
+                    AppTextField(value = destInput, onValueChange = { destInput = it }, label = "Punto de descenso en ruta", leadingIcon = Icons.Rounded.LocationOn)
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("Asientos:", style = MaterialTheme.typography.titleSmall)
+                        CounterStepper(value = seatsInput, onChange = { seatsInput = it }, range = 1..trip.seatsLeft.coerceAtLeast(1))
+                    }
+                    Text("Método de pago (se cobra al abordar):", style = MaterialTheme.typography.labelMedium, color = TextSecondary)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        state.paymentMethods.forEach { pm ->
+                            SelectChip(text = pm.name, selected = selectedPayId == pm.id, onClick = { selectedPayId = pm.id })
+                        }
+                    }
+                    Text("Total estimado: S/ ${trip.price * seatsInput}.00 PEN • Intentos usados: $attemptsUsed/3", style = MaterialTheme.typography.labelMedium, color = PrimaryBlue)
+                }
+            },
+            confirmButton = {
+                PrimaryPillButton(
+                    text = "Enviar solicitud",
+                    onClick = {
+                        val methodName = state.paymentMethods.firstOrNull { it.id == selectedPayId }?.name
+                        val req = state.requestTrip(trip.id, pickupInput, destInput, seatsInput, methodName)
+                        showRequestSheet = false
+                        if (req != null) {
+                            activeRequestId = req.id
+                        } else {
+                            Toast.makeText(context, "No se pudo enviar (verifica cupo o límite de 3 intentos)", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                )
+            },
+            dismissButton = { TextButton(onClick = { showRequestSheet = false }) { Text("Cancelar") } }
+        )
+    }
+
+    if (activeRequest != null) {
+        when (activeRequest.status) {
+            RideRequestStatus.PENDIENTE -> {
+                var secondsLeft by remember(activeRequest.id) { mutableIntStateOf(60) }
+                LaunchedEffect(activeRequest.id) {
+                    while (secondsLeft > 0) {
+                        delay(1000L)
+                        secondsLeft--
+                    }
+                    state.expireRideRequest(activeRequest.id)
+                }
+                AlertDialog(
+                    onDismissRequest = {},
+                    title = {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("Esperando al conductor", style = MaterialTheme.typography.titleLarge)
+                            StatusPill("${secondsLeft}s", container = WarningContainer, content = WarningAmber, icon = Icons.Rounded.Timer)
+                        }
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text("Tu solicitud fue enviada a ${activeRequest.driverName}. Si cancelas ahora antes de que responda, no consumes un intento.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            TonalPillButton(
+                                text = "Simular aceptación del conductor",
+                                onClick = { state.acceptRideRequest(activeRequest.id) }
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            state.cancelPendingRequestByPassenger(activeRequest.id)
+                            activeRequestId = null
+                            Toast.makeText(context, "Solicitud cancelada sin consumir intento", Toast.LENGTH_SHORT).show()
+                        }) { Text("Cancelar solicitud", color = DangerRed) }
+                    }
+                )
+            }
+            RideRequestStatus.ACEPTADA_HOLD -> {
+                PassengerHoldConfirmationDialog(
+                    request = activeRequest,
+                    state = state,
+                    onDismiss = { activeRequestId = null },
+                    onConfirmed = {
+                        activeRequestId = null
+                        nav.selectTab(MainTab.MIS_VIAJES)
+                    }
+                )
+            }
+            RideRequestStatus.EXPIRADA, RideRequestStatus.RECHAZADA -> {
+                AlertDialog(
+                    onDismissRequest = { activeRequestId = null },
+                    title = { Text(if (activeRequest.status == RideRequestStatus.EXPIRADA) "Solicitud Expirada" else "Solicitud Rechazada") },
+                    text = {
+                        Text(
+                            "Motivo: ${activeRequest.rejectionReason ?: "Tiempo de respuesta vencido"}. Intentos consumidos: ${activeRequest.attemptsUsed}/${activeRequest.maxAttempts}.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextSecondary
+                        )
+                    },
+                    confirmButton = { TextButton(onClick = { activeRequestId = null }) { Text("Entendido") } }
+                )
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -102,21 +244,29 @@ fun TripDetailScreen(tripId: String, state: AppState, nav: AppNavigator) {
                                 }
                             }
                             Column(horizontalAlignment = Alignment.End) {
-                                Text("$${trip.price}.00 MXN", style = MaterialTheme.typography.headlineSmall, color = PrimaryBlue)
-                                Text("Base $${trip.price - 10} + Seguro $10", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                                Text("S/ ${trip.price}.00 PEN", style = MaterialTheme.typography.headlineSmall, color = PrimaryBlue)
+                                Text(
+                                    if (trip.autoAccept && trip.gpsReliable) "Aceptación automática • ${trip.distanceKm} km"
+                                    else "Precio definido por conductor • ${trip.distanceKm} km",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextMuted
+                                )
                             }
                         }
 
+                        if (attemptsUsed >= 3) {
+                            StatusPill("Límite de 3 intentos alcanzado para este viaje", container = DangerContainer, content = DangerRed)
+                        }
+
                         PrimaryPillButton(
-                            text = if (trip.seatsLeft > 0) "Reservar plaza ($${trip.price}.00 MXN)" else "Sin asientos disponibles",
+                            text = when {
+                                trip.seatsLeft <= 0 -> "Sin asientos disponibles"
+                                attemptsUsed >= 3 -> "Límite de intentos alcanzado"
+                                else -> "Solicitar reserva (S/ ${trip.price}.00 PEN)"
+                            },
                             icon = Icons.Rounded.CheckCircle,
-                            enabled = trip.seatsLeft > 0,
-                            onClick = {
-                                if (state.bookTrip(trip.id) != null) {
-                                    Toast.makeText(context, "Reserva confirmada", Toast.LENGTH_SHORT).show()
-                                    nav.selectTab(MainTab.MIS_VIAJES)
-                                }
-                            }
+                            enabled = trip.seatsLeft > 0 && attemptsUsed < 3,
+                            onClick = { showRequestSheet = true }
                         )
                     }
                 }
@@ -146,11 +296,11 @@ fun TripDetailScreen(tripId: String, state: AppState, nav: AppNavigator) {
                         Modifier.fillMaxWidth().padding(12.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        MapOverlayPill("Ruta en vivo disponible")
+                        MapOverlayPill(if (trip.gpsReliable) "GPS confiable" else "GPS desactualizado (solo manual)")
                         StatusPill("${trip.durationMin} min", container = CardSurface, content = TextPrimary, icon = Icons.Rounded.Schedule)
                     }
                     MapOverlayPill(
-                        "14.2 km • ${trip.via}",
+                        "${trip.distanceKm} km • ${trip.via}",
                         container = PrimaryBlue,
                         content = Color.White,
                         modifier = Modifier.align(Alignment.Center)
@@ -166,7 +316,7 @@ fun TripDetailScreen(tripId: String, state: AppState, nav: AppNavigator) {
                             Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
                                 Text(trip.driver.name, style = MaterialTheme.typography.titleLarge, color = TextPrimary)
                                 RatingLabel(trip.driver.rating, suffix = "(${trip.driver.totalTrips})")
-                                Text("Conductor Élite Verificado", style = MaterialTheme.typography.labelSmall, color = PrimaryBlue)
+                                Text("Conductor Verificado", style = MaterialTheme.typography.labelSmall, color = PrimaryBlue)
                             }
                             Surface(color = SoftContainer, shape = RoundedCornerShape(14.dp)) {
                                 Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -181,7 +331,7 @@ fun TripDetailScreen(tripId: String, state: AppState, nav: AppNavigator) {
                                 IconBubble(Icons.Rounded.DirectionsCar, size = 36, container = PrimaryContainer, tint = PrimaryBlueDark)
                                 Column {
                                     Text(trip.driver.vehicle, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-                                    Text("${trip.driver.color} • Placas: ${trip.driver.plate}", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                    Text("${trip.driver.color} • Placa: ${trip.driver.plate}", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                                 }
                             }
                         }
@@ -226,7 +376,7 @@ fun TripDetailScreen(tripId: String, state: AppState, nav: AppNavigator) {
                         Surface(color = SoftContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
                             Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Icon(Icons.Rounded.Traffic, contentDescription = null, tint = PrimaryBlueDark, modifier = Modifier.size(18.dp))
-                                Text("${trip.durationMin} min de trayecto aproximado en tráfico regular", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text("${trip.durationMin} min de trayecto aproximado • Cobro al abordar", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                             }
                         }
                     }
@@ -252,8 +402,8 @@ fun TripDetailScreen(tripId: String, state: AppState, nav: AppNavigator) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         IconBubble(Icons.Rounded.Shield, size = 40, container = PrimaryContainer, tint = PrimaryBlueDark)
                         Column {
-                            Text("Viaje Protegido RutaCompartida", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-                            Text("Incluye seguro de accidentes por plaza y monitoreo satelital continuo.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            Text("Viaje Monitoreado RutaCompartida", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                            Text("Doble confirmación (hold 60 s), chat privado por reserva y monitoreo GPS continuo.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
                         }
                     }
                 }

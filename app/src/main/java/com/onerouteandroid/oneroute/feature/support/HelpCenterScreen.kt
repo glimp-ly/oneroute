@@ -216,7 +216,7 @@ fun HelpCenterScreen(state: AppState, nav: AppNavigator) {
                         container = SoftContainer,
                         iconBg = CardSurface,
                         iconTint = TextSecondary,
-                        onClick = { Toast.makeText(context, "Reporte de incidente abierto", Toast.LENGTH_SHORT).show() },
+                        onClick = { nav.navigate(Route.SafetyReports(initialTab = 0)) },
                         modifier = Modifier.weight(1f)
                     )
                 }

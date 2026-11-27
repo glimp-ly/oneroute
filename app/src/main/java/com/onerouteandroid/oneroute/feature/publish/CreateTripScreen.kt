@@ -36,6 +36,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -256,29 +257,45 @@ fun CreateTripScreen(state: AppState, nav: AppNavigator) {
 
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                             Column {
-                                Text("APORTE POR PASAJERO", style = MaterialTheme.typography.labelSmall, color = TextMuted)
-                                Text("$${draft.pricePerSeat} MXN / asiento", style = MaterialTheme.typography.titleLarge, color = PrimaryBlue)
+                                Text("PRECIO DEFINIDO POR TI", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                                Text("S/ ${draft.pricePerSeat}.00 PEN / asiento", style = MaterialTheme.typography.titleLarge, color = PrimaryBlue)
                             }
-                            StatusPill("Recomendado", container = PrimaryContainer, content = PrimaryBlueDark, icon = Icons.Rounded.AutoAwesome)
+                            StatusPill("Referencia S/ 2/km", container = PrimaryContainer, content = PrimaryBlueDark, icon = Icons.Rounded.AutoAwesome)
                         }
 
                         Slider(
                             value = draft.pricePerSeat.toFloat(),
-                            onValueChange = { v -> state.updateDraft { it.copy(pricePerSeat = (v / 5f).roundToInt() * 5) } },
-                            valueRange = 40f..110f,
-                            steps = 13,
+                            onValueChange = { v -> state.updateDraft { it.copy(pricePerSeat = (v / 2f).roundToInt() * 2) } },
+                            valueRange = 10f..80f,
+                            steps = 34,
                             colors = SliderDefaults.colors(thumbColor = PrimaryBlue, activeTrackColor = PrimaryBlue)
                         )
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("$40 (Mín)", style = MaterialTheme.typography.bodySmall, color = TextMuted)
-                            Text("$50 - $90 (Sugerido)", style = MaterialTheme.typography.labelSmall, color = PrimaryBlue)
-                            Text("$110 (Máx)", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                            Text("S/ 10 (Mín)", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                            Text("Tú decides la tarifa", style = MaterialTheme.typography.labelSmall, color = PrimaryBlue)
+                            Text("S/ 80 (Máx)", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                        }
+
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text("Aceptación automática", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                                Text("Pasa directo a retención 60 s si tu GPS es confiable", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            }
+                            Switch(
+                                checked = draft.autoAccept,
+                                onCheckedChange = { enabled -> state.updateDraft { it.copy(autoAccept = enabled) } }
+                            )
                         }
 
                         Surface(color = SoftContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
                             Row(Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Icon(Icons.Rounded.LocalGasStation, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(18.dp))
-                                Text("Tarifa calculada para amortizar 2 casetas y 1.2 L de combustible promedio en tu ruta.", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Text(
+                                    if (state.canPublishTrip()) "Billetera de comisiones activa (S/ ${"%.2f".format(state.commissionWalletBalance)} PEN)."
+                                    else "Recarga tu billetera de comisiones antes de publicar.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = TextSecondary
+                                )
                             }
                         }
                     }
@@ -314,10 +331,10 @@ fun CreateTripScreen(state: AppState, nav: AppNavigator) {
                     Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                         IconBubble(Icons.Rounded.Payments, size = 40, container = PrimaryContainer, tint = PrimaryBlueDark)
                         Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-                            Text("Aporte potencial (${draft.seats} pasajeros)", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
-                            Text("$${draft.earnings} MXN", style = MaterialTheme.typography.headlineSmall, color = TextPrimary)
+                            Text("Ingreso proyectado (${draft.seats} pasajeros)", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                            Text("S/ ${draft.earnings}.00 PEN", style = MaterialTheme.typography.headlineSmall, color = TextPrimary)
                         }
-                        Text("100% libre\ncomisiones", style = MaterialTheme.typography.labelSmall, color = PrimaryBlue)
+                        Text("Definido por ti", style = MaterialTheme.typography.labelSmall, color = PrimaryBlue)
                     }
                 }
             }

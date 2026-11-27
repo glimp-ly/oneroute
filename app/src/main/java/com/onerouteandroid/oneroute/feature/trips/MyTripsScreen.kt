@@ -24,10 +24,12 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.CreditCard
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Eco
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.FilterList
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.LocationOn
 import androidx.compose.material.icons.rounded.Navigation
+import androidx.compose.material.icons.rounded.NotificationsActive
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Route
 import androidx.compose.material.icons.rounded.Schedule
@@ -37,11 +39,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -82,6 +87,10 @@ import com.onerouteandroid.oneroute.core.theme.SuccessGreen
 import com.onerouteandroid.oneroute.core.theme.TextMuted
 import com.onerouteandroid.oneroute.core.theme.TextPrimary
 import com.onerouteandroid.oneroute.core.theme.TextSecondary
+import com.onerouteandroid.oneroute.core.theme.WarningAmber
+import com.onerouteandroid.oneroute.core.theme.WarningContainer
+import com.onerouteandroid.oneroute.data.model.RideRequest
+import com.onerouteandroid.oneroute.data.model.RideRequestStatus
 import com.onerouteandroid.oneroute.data.model.ScheduledTrip
 import com.onerouteandroid.oneroute.data.model.TripRole
 
@@ -91,6 +100,35 @@ fun MyTripsScreen(initialRole: Int, state: AppState, nav: AppNavigator) {
     var roleIndex by rememberSaveable(initialRole) { mutableIntStateOf(initialRole) }
     val selectedRole = if (roleIndex == 0) TripRole.PASSENGER else TripRole.DRIVER
     val filteredTrips = state.scheduledTrips.filter { it.role == selectedRole }
+
+    var showIncomingRequests by remember { mutableStateOf(false) }
+    var holdDialogRequest by remember { mutableStateOf<RideRequest?>(null) }
+    var modifyTripTarget by remember { mutableStateOf<ScheduledTrip?>(null) }
+
+    if (showIncomingRequests) {
+        IncomingRequestsDialog(
+            requests = state.incomingPendingRequests,
+            state = state,
+            onDismiss = { showIncomingRequests = false }
+        )
+    }
+
+    holdDialogRequest?.let { req ->
+        PassengerHoldConfirmationDialog(
+            request = req,
+            state = state,
+            onDismiss = { holdDialogRequest = null },
+            onConfirmed = { holdDialogRequest = null }
+        )
+    }
+
+    modifyTripTarget?.let { trip ->
+        ModifyReservationDialog(
+            trip = trip,
+            state = state,
+            onDismiss = { modifyTripTarget = null }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -141,6 +179,58 @@ fun MyTripsScreen(initialRole: Int, state: AppState, nav: AppNavigator) {
                         Row(Modifier.padding(4.dp)) {
                             RolePill("Como Pasajero", Icons.Rounded.Person, roleIndex == 0, Modifier.weight(1f)) { roleIndex = 0 }
                             RolePill("Como Conductor", Icons.Rounded.DirectionsCar, roleIndex == 1, Modifier.weight(1f)) { roleIndex = 1 }
+                        }
+                    }
+                }
+
+                if (selectedRole == TripRole.DRIVER && state.incomingPendingRequests.isNotEmpty()) {
+                    item {
+                        AppCard(onClick = { showIncomingRequests = true }, container = WarningContainer, corner = 20) {
+                            Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                IconBubble(Icons.Rounded.NotificationsActive, size = 38, container = CardSurface, tint = WarningAmber)
+                                Column(Modifier.weight(1f)) {
+                                    Text("${state.incomingPendingRequests.size} solicitud(es) entrante(s)", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                                    Text("Tienes 60 segundos para aceptar o rechazar", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                }
+                                StatusPill("Responder", container = PrimaryBlue, content = Color.White)
+                            }
+                        }
+                    }
+                }
+
+                if (selectedRole == TripRole.PASSENGER && state.passengerActiveRequests.isNotEmpty()) {
+                    item {
+                        SectionHeader("Solicitudes en curso", badge = state.passengerActiveRequests.size.toString())
+                    }
+                    items(state.passengerActiveRequests, key = { it.id }) { req ->
+                        AppCard(container = PrimaryContainer, corner = 20) {
+                            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                                    Text(req.tripTitle, style = MaterialTheme.typography.titleSmall, color = TextPrimary)
+                                    StatusPill(req.status.label, container = CardSurface, content = PrimaryBlueDark)
+                                }
+                                Text("${req.seatsRequested} asiento(s) • S/ ${req.estimatedPrice}.00 PEN", style = MaterialTheme.typography.bodySmall, color = TextSecondary)
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    if (req.status == RideRequestStatus.ACEPTADA_HOLD) {
+                                        PrimaryPillButton(
+                                            text = "Confirmar ahora (60 s)",
+                                            modifier = Modifier.weight(1f),
+                                            onClick = { holdDialogRequest = req }
+                                        )
+                                    } else {
+                                        TonalPillButton(
+                                            text = "Simular aceptación",
+                                            modifier = Modifier.weight(1f),
+                                            onClick = { state.acceptRideRequest(req.id) }
+                                        )
+                                    }
+                                    OutlinedPillButton(
+                                        text = "Cancelar",
+                                        modifier = Modifier.weight(0.7f),
+                                        onClick = { state.cancelPendingRequestByPassenger(req.id) }
+                                    )
+                                }
+                            }
                         }
                     }
                 }
@@ -197,6 +287,9 @@ fun MyTripsScreen(initialRole: Int, state: AppState, nav: AppNavigator) {
                             trip = trip,
                             onOpenActive = { nav.navigate(Route.ActiveTrip(trip.id)) },
                             onOpenMeeting = { nav.navigate(Route.MeetingPoint(trip.id)) },
+                            onModify = { modifyTripTarget = trip },
+                            onToggleAccepting = { state.toggleTripAcceptsBookings(trip.id) },
+                            onOpenIncoming = { showIncomingRequests = true },
                             onOpenChat = {
                                 val driverName = trip.driver?.name?.substringBefore(' ')
                                 val conv = if (driverName != null) state.conversations.firstOrNull { it.name.contains(driverName) } else null
@@ -266,6 +359,9 @@ private fun ScheduledTripCard(
     trip: ScheduledTrip,
     onOpenActive: () -> Unit,
     onOpenMeeting: () -> Unit,
+    onModify: () -> Unit,
+    onToggleAccepting: () -> Unit,
+    onOpenIncoming: () -> Unit,
     onOpenChat: () -> Unit
 ) {
     val context = LocalContext.current
@@ -282,7 +378,13 @@ private fun ScheduledTripCard(
             }
 
             if (trip.role == TripRole.DRIVER) {
-                Text(trip.status, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(trip.status, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(if (trip.acceptsNewBookings) "Aceptando reservas" else "Reservas pausadas", style = MaterialTheme.typography.labelSmall, color = TextSecondary)
+                        Switch(checked = trip.acceptsNewBookings, onCheckedChange = { onToggleAccepting() })
+                    }
+                }
             }
 
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
@@ -301,18 +403,26 @@ private fun ScheduledTripCard(
 
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 if (trip.role == TripRole.PASSENGER) {
-                    Surface(onClick = onOpenMeeting, color = SoftContainer, shape = CircleShape) {
-                        Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Icon(Icons.Rounded.LocationOn, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(14.dp))
-                            Text("Punto de encuentro", style = MaterialTheme.typography.labelMedium, color = PrimaryBlue)
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Surface(onClick = onOpenMeeting, color = SoftContainer, shape = CircleShape) {
+                            Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Rounded.LocationOn, contentDescription = null, tint = PrimaryBlue, modifier = Modifier.size(14.dp))
+                                Text("Encuentro", style = MaterialTheme.typography.labelMedium, color = PrimaryBlue)
+                            }
+                        }
+                        Surface(onClick = onModify, color = SoftContainer, shape = CircleShape) {
+                            Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Icon(Icons.Rounded.Edit, contentDescription = null, tint = PrimaryBlueDark, modifier = Modifier.size(14.dp))
+                                Text("Modificar", style = MaterialTheme.typography.labelMedium, color = PrimaryBlueDark)
+                            }
                         }
                     }
                 } else {
                     Spacer(Modifier.width(1.dp))
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("$${trip.price}.00", style = MaterialTheme.typography.titleLarge, color = PrimaryBlue)
-                    Text(if (trip.role == TripRole.PASSENGER) "MXN pagado" else "MXN proyectados", style = MaterialTheme.typography.bodySmall, color = TextMuted)
+                    Text("S/ ${trip.price}.00", style = MaterialTheme.typography.titleLarge, color = PrimaryBlue)
+                    Text(if (trip.role == TripRole.PASSENGER) "PEN estimado" else "PEN proyectados", style = MaterialTheme.typography.bodySmall, color = TextMuted)
                 }
             }
 
@@ -329,21 +439,21 @@ private fun ScheduledTripCard(
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     OutlinedPillButton(
-                        text = "Chat con conductor",
+                        text = "Chat",
                         icon = Icons.AutoMirrored.Rounded.Chat,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(0.9f),
                         onClick = onOpenChat
                     )
                     PrimaryPillButton(
                         text = "Ver viaje activo",
                         icon = Icons.Rounded.Navigation,
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1.2f),
                         onClick = onOpenActive
                     )
                 }
             } else {
                 Surface(
-                    onClick = { Toast.makeText(context, "Pasajeros confirmados: ${trip.passengersSummary ?: "0"}", Toast.LENGTH_SHORT).show() },
+                    onClick = onOpenIncoming,
                     color = SoftContainer,
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -353,7 +463,7 @@ private fun ScheduledTripCard(
                         Spacer(Modifier.width(10.dp))
                         Column(Modifier.weight(1f)) {
                             Text(trip.passengersSummary ?: "Sin reservas aún", style = MaterialTheme.typography.titleSmall, color = TextPrimary)
-                            Text("Confirmaron punto de encuentro", style = MaterialTheme.typography.bodySmall, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text("Toca para revisar solicitudes entrantes", style = MaterialTheme.typography.bodySmall, color = TextSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         }
                         Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = TextMuted)
                     }
@@ -366,10 +476,10 @@ private fun ScheduledTripCard(
                         onClick = onOpenActive
                     )
                     TonalPillButton(
-                        text = "Gestionar pasajeros",
+                        text = "Solicitudes (60 s)",
                         icon = Icons.Rounded.Groups,
                         modifier = Modifier.weight(1f),
-                        onClick = { Toast.makeText(context, "2 pasajeros listos para abordar", Toast.LENGTH_SHORT).show() }
+                        onClick = onOpenIncoming
                     )
                 }
             }

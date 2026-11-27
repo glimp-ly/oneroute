@@ -69,6 +69,8 @@ import com.onerouteandroid.oneroute.core.components.TonalPillButton
 import com.onerouteandroid.oneroute.core.navigation.AppNavigator
 import com.onerouteandroid.oneroute.core.navigation.AppState
 import com.onerouteandroid.oneroute.core.navigation.Route
+import com.onerouteandroid.oneroute.data.model.ScheduledTrip
+import com.onerouteandroid.oneroute.data.model.TripRole
 import com.onerouteandroid.oneroute.core.theme.CanvasBackground
 import com.onerouteandroid.oneroute.core.theme.CardSurface
 import com.onerouteandroid.oneroute.core.theme.DangerRed
@@ -101,17 +103,58 @@ fun ActiveTripScreen(tripId: String, state: AppState, nav: AppNavigator) {
     val destinationDetail = trip?.destinationDetail ?: "Torre Arcos"
     val departure = trip?.departure ?: "18:35"
     var showSosDialog by remember { mutableStateOf(false) }
+    var showTrackingDialog by remember { mutableStateOf(false) }
+    var showEarlyFinishDialog by remember { mutableStateOf(false) }
+    var showModifyDestDialog by remember { mutableStateOf(false) }
+
+    val effectiveTrip = trip ?: ScheduledTrip(
+        id = tripId, role = TripRole.PASSENGER, dateTag = "HOY", seatInfo = "1 asiento",
+        status = "En curso", departure = departure, arrival = "19:15",
+        origin = origin, originDetail = originDetail, destination = destination, destinationDetail = destinationDetail,
+        durationMin = 45, price = 24
+    )
+
+    if (showTrackingDialog) {
+        TrackingLinkDialog(trip = effectiveTrip, state = state, onDismiss = { showTrackingDialog = false })
+    }
+
+    if (showEarlyFinishDialog) {
+        EarlyFinishDialog(
+            trip = effectiveTrip,
+            state = state,
+            onDismiss = { showEarlyFinishDialog = false },
+            onFinished = {
+                showEarlyFinishDialog = false
+                nav.navigate(Route.TripSummary(effectiveTrip.id))
+            }
+        )
+    }
+
+    if (showModifyDestDialog) {
+        ModifyReservationDialog(trip = effectiveTrip, state = state, initialTab = 1, onDismiss = { showModifyDestDialog = false })
+    }
 
     if (showSosDialog) {
+        val contactsText = state.emergencyContacts.joinToString("\n") { "• ${it.name} (${it.relationship}): ${it.phone}" }
+            .ifBlank { "Sin contactos configurados." }
         AlertDialog(
             onDismissRequest = { showSosDialog = false },
             title = { Text("Protocolo de Emergencia SOS") },
-            text = { Text("¿Deseas activar la alerta satelital con soporte 24/7 y compartir tu ubicación en tiempo real con tus contactos de confianza?") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Se registrará tu ubicación GPS y se enviará alerta a la plataforma y a tus contactos de confianza:", style = MaterialTheme.typography.bodySmall)
+                    Text(contactsText, style = MaterialTheme.typography.bodySmall, color = TextPrimary)
+                    TextButton(onClick = {
+                        showSosDialog = false
+                        nav.navigate(Route.EmergencyContacts)
+                    }) { Text("Administrar contactos de emergencia") }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
                     showSosDialog = false
-                    Toast.makeText(context, "Alerta SOS activada con monitoreo 24/7", Toast.LENGTH_LONG).show()
-                }) { Text("Activar SOS", color = DangerRed) }
+                    Toast.makeText(context, "Alerta SOS activada • Llamando a emergencias 105", Toast.LENGTH_LONG).show()
+                }) { Text("Activar SOS / Llamar 105", color = DangerRed) }
             },
             dismissButton = {
                 TextButton(onClick = { showSosDialog = false }) { Text("Cancelar") }
@@ -305,10 +348,22 @@ fun ActiveTripScreen(tripId: String, state: AppState, nav: AppNavigator) {
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     PrimaryPillButton(
-                        text = "Compartir ubicación en vivo",
+                        text = "Generar enlace de seguimiento",
                         icon = Icons.Rounded.LocationOn,
-                        onClick = { Toast.makeText(context, "Ubicación en vivo compartida", Toast.LENGTH_SHORT).show() }
+                        onClick = { showTrackingDialog = true }
                     )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        TonalPillButton(
+                            text = "Cambiar destino",
+                            modifier = Modifier.weight(1f),
+                            onClick = { showModifyDestDialog = true }
+                        )
+                        TonalPillButton(
+                            text = "Finalizar antes",
+                            modifier = Modifier.weight(1f),
+                            onClick = { showEarlyFinishDialog = true }
+                        )
+                    }
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         TonalPillButton(
                             text = "Finalizar viaje",
@@ -327,6 +382,11 @@ fun ActiveTripScreen(tripId: String, state: AppState, nav: AppNavigator) {
                             onClick = { nav.navigate(Route.CancelTrip(trip?.id ?: tripId)) }
                         )
                     }
+                    TonalPillButton(
+                        text = "Reportar incidente o usuario",
+                        icon = Icons.Rounded.Warning,
+                        onClick = { nav.navigate(Route.SafetyReports(effectiveTrip.id, initialTab = 0)) }
+                    )
                 }
             }
         }

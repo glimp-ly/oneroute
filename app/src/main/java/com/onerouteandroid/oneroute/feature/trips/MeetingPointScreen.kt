@@ -51,6 +51,7 @@ import com.onerouteandroid.oneroute.core.components.AppTopBar
 import com.onerouteandroid.oneroute.core.components.AvatarBadge
 import com.onerouteandroid.oneroute.core.components.CallButton
 import com.onerouteandroid.oneroute.core.components.IconBubble
+import com.onerouteandroid.oneroute.core.components.MainTab
 import com.onerouteandroid.oneroute.core.components.MapOverlayPill
 import com.onerouteandroid.oneroute.core.components.PrimaryPillButton
 import com.onerouteandroid.oneroute.core.components.RatingLabel
@@ -60,6 +61,8 @@ import com.onerouteandroid.oneroute.core.components.TonalPillButton
 import com.onerouteandroid.oneroute.core.navigation.AppNavigator
 import com.onerouteandroid.oneroute.core.navigation.AppState
 import com.onerouteandroid.oneroute.core.navigation.Route
+import com.onerouteandroid.oneroute.data.model.ScheduledTrip
+import com.onerouteandroid.oneroute.data.model.TripRole
 import com.onerouteandroid.oneroute.core.theme.CanvasBackground
 import com.onerouteandroid.oneroute.core.theme.CardSurface
 import com.onerouteandroid.oneroute.core.theme.PrimaryBlue
@@ -81,6 +84,46 @@ fun MeetingPointScreen(tripId: String, state: AppState, nav: AppNavigator) {
     val boardingCode = trip?.boardingCode ?: "#4192"
     val firstName = driver.name.substringBefore(' ')
     var waitingNotified by rememberSaveable(tripId) { mutableStateOf(false) }
+    var showNoShowDialog by rememberSaveable { mutableStateOf(false) }
+    var showModifyPickup by rememberSaveable { mutableStateOf(false) }
+    var showTrackingDialog by rememberSaveable { mutableStateOf(false) }
+
+    val activeTrip = trip ?: ScheduledTrip(
+        id = tripId, role = TripRole.PASSENGER, dateTag = "HOY", seatInfo = "1 asiento",
+        status = "Confirmado", departure = "18:30", arrival = "19:15",
+        origin = "Miraflores", originDetail = "Óvalo de Miraflores",
+        destination = "San Isidro", destinationDetail = "Centro Empresarial",
+        durationMin = 45, price = 24, driver = driver, boardingCode = boardingCode
+    )
+
+    if (showNoShowDialog) {
+        NoShowWaitDialog(
+            trip = activeTrip,
+            state = state,
+            onDismiss = { showNoShowDialog = false },
+            onDeclared = {
+                showNoShowDialog = false
+                nav.selectTab(MainTab.MIS_VIAJES)
+            }
+        )
+    }
+
+    if (showModifyPickup) {
+        ModifyReservationDialog(
+            trip = activeTrip,
+            state = state,
+            initialTab = 0,
+            onDismiss = { showModifyPickup = false }
+        )
+    }
+
+    if (showTrackingDialog) {
+        TrackingLinkDialog(
+            trip = activeTrip,
+            state = state,
+            onDismiss = { showTrackingDialog = false }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -213,6 +256,23 @@ fun MeetingPointScreen(tripId: String, state: AppState, nav: AppNavigator) {
                             waitingNotified = true
                             Toast.makeText(context, "Notificación enviada a $firstName", Toast.LENGTH_SHORT).show()
                         }
+                    )
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TonalPillButton(
+                            text = "Cambiar recogida",
+                            modifier = Modifier.weight(1f),
+                            onClick = { showModifyPickup = true }
+                        )
+                        TonalPillButton(
+                            text = "Compartir ruta",
+                            modifier = Modifier.weight(1f),
+                            onClick = { showTrackingDialog = true }
+                        )
+                    }
+                    TonalPillButton(
+                        text = "Espera 5 min / Marcar No-Show",
+                        icon = Icons.Rounded.Schedule,
+                        onClick = { showNoShowDialog = true }
                     )
                     Text(
                         "Esto le enviará una notificación con vibración inmediata a $firstName",

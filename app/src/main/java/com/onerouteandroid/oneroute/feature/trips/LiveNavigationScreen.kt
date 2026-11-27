@@ -64,6 +64,8 @@ import com.onerouteandroid.oneroute.core.components.TonalPillButton
 import com.onerouteandroid.oneroute.core.navigation.AppNavigator
 import com.onerouteandroid.oneroute.core.navigation.AppState
 import com.onerouteandroid.oneroute.core.navigation.Route
+import com.onerouteandroid.oneroute.data.model.ScheduledTrip
+import com.onerouteandroid.oneroute.data.model.TripRole
 import com.onerouteandroid.oneroute.core.theme.CanvasBackground
 import com.onerouteandroid.oneroute.core.theme.CardSurface
 import com.onerouteandroid.oneroute.core.theme.DangerRed
@@ -83,6 +85,31 @@ fun LiveNavigationScreen(tripId: String, state: AppState, nav: AppNavigator) {
     var muted by remember { mutableStateOf(false) }
     var showQr by remember { mutableStateOf(false) }
     var showSos by remember { mutableStateOf(false) }
+    var showTracking by remember { mutableStateOf(false) }
+    var showEarlyFinish by remember { mutableStateOf(false) }
+
+    val effectiveTrip = trip ?: ScheduledTrip(
+        id = tripId, role = TripRole.PASSENGER, dateTag = "HOY", seatInfo = "1 asiento",
+        status = "En curso", departure = "18:30", arrival = "19:12",
+        origin = "Miraflores", originDetail = "Óvalo", destination = "San Isidro", destinationDetail = "Centro Empresarial",
+        durationMin = 42, price = 24, driver = driver
+    )
+
+    if (showTracking) {
+        TrackingLinkDialog(trip = effectiveTrip, state = state, onDismiss = { showTracking = false })
+    }
+
+    if (showEarlyFinish) {
+        EarlyFinishDialog(
+            trip = effectiveTrip,
+            state = state,
+            onDismiss = { showEarlyFinish = false },
+            onFinished = {
+                showEarlyFinish = false
+                nav.navigate(Route.TripSummary(effectiveTrip.id))
+            }
+        )
+    }
 
     val transition = rememberInfiniteTransition(label = "navProgress")
     val liveProgress by transition.animateFloat(
@@ -107,14 +134,24 @@ fun LiveNavigationScreen(tripId: String, state: AppState, nav: AppNavigator) {
     }
 
     if (showSos) {
+        val contactsText = state.emergencyContacts.joinToString("\n") { "• ${it.name}: ${it.phone}" }
+            .ifBlank { "Sin contactos configurados." }
         AlertDialog(
             onDismissRequest = { showSos = false },
-            title = { Text("Emergencia SOS 911") },
-            text = { Text("Se enviará tu ubicación GPS en tiempo real a emergencias 911 y al centro de seguridad RutaCompartida.") },
+            title = { Text("Emergencia SOS 105 / 911") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Se enviará tu ubicación GPS en tiempo real al centro de seguridad y a tus contactos:\n$contactsText", style = MaterialTheme.typography.bodySmall)
+                    TextButton(onClick = {
+                        showSos = false
+                        nav.navigate(Route.EmergencyContacts)
+                    }) { Text("Configurar contactos") }
+                }
+            },
             confirmButton = {
                 TextButton(onClick = {
                     showSos = false
-                    Toast.makeText(context, "Alerta SOS enviada", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "Alerta SOS enviada • Llamando a emergencias", Toast.LENGTH_LONG).show()
                 }) { Text("Confirmar SOS", color = DangerRed) }
             },
             dismissButton = { TextButton(onClick = { showSos = false }) { Text("Cancelar") } }
@@ -164,7 +201,7 @@ fun LiveNavigationScreen(tripId: String, state: AppState, nav: AppNavigator) {
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Surface(
-                        onClick = { Toast.makeText(context, "Enlace de seguimiento en vivo copiado", Toast.LENGTH_SHORT).show() },
+                        onClick = { showTracking = true },
                         color = CardSurface,
                         shape = CircleShape,
                         shadowElevation = 3.dp
@@ -246,17 +283,14 @@ fun LiveNavigationScreen(tripId: String, state: AppState, nav: AppNavigator) {
 
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         TonalPillButton(
-                            text = "Llegué a destino",
+                            text = "Finalizar recorrido",
                             icon = Icons.Rounded.CheckCircle,
                             modifier = Modifier.weight(1f),
-                            onClick = {
-                                state.completeActiveTrip(trip?.id ?: tripId)
-                                nav.navigate(Route.TripSummary(trip?.id ?: tripId))
-                            }
+                            onClick = { showEarlyFinish = true }
                         )
                         DangerPillButton(
-                            text = "SOS 911",
-                            modifier = Modifier.weight(0.8f),
+                            text = "SOS",
+                            modifier = Modifier.weight(0.6f),
                             onClick = { showSos = true }
                         )
                     }

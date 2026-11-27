@@ -24,6 +24,7 @@ import androidx.compose.material.icons.rounded.Eco
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.NearMe
 import androidx.compose.material.icons.rounded.Park
+import androidx.compose.material.icons.rounded.Report
 import androidx.compose.material.icons.rounded.Savings
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Speed
@@ -192,7 +193,7 @@ fun TripSummaryScreen(tripId: String, state: AppState, nav: AppNavigator) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         Text("TOTAL COBRADO", style = MaterialTheme.typography.labelSmall, color = TextMuted)
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                            Text("$$price.00 MXN", style = MaterialTheme.typography.headlineSmall, color = PrimaryBlue)
+                            Text("S/ $price.00 PEN", style = MaterialTheme.typography.headlineSmall, color = PrimaryBlue)
                             StatusPill("Cobro exitoso", container = SuccessContainer, content = SuccessGreen, icon = Icons.Rounded.Check)
                         }
                         Surface(color = SoftContainer, shape = RoundedCornerShape(14.dp), modifier = Modifier.fillMaxWidth()) {
@@ -222,6 +223,11 @@ fun TripSummaryScreen(tripId: String, state: AppState, nav: AppNavigator) {
                         text = "Calificar a ${driver.name}",
                         icon = Icons.Rounded.Star,
                         onClick = { nav.navigate(Route.RateUser(tripId, driver.name, "$vehicleLabel • ${driver.plate}")) }
+                    )
+                    TonalPillButton(
+                        text = "Reportar usuario / incidente",
+                        icon = Icons.Rounded.Report,
+                        onClick = { nav.navigate(Route.SafetyReports(tripId, initialTab = 1)) }
                     )
                     TonalPillButton(
                         text = "Volver al Inicio",

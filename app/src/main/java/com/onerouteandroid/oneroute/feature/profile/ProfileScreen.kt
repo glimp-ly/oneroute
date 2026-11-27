@@ -27,6 +27,7 @@ import androidx.compose.material.icons.rounded.Description
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Eco
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.MilitaryTech
 import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.Settings
@@ -241,8 +242,8 @@ fun ProfileScreen(state: AppState, nav: AppNavigator) {
                     Column {
                         SettingsRow(
                             icon = Icons.Rounded.AccountBalanceWallet,
-                            title = "Billetera y Saldo M3",
-                            subtitle = "Disponible: $${"%.2f".format(state.walletBalance)} MXN • CLABE ••4109",
+                            title = "Billeteras y Pagos (3 cuentas)",
+                            subtitle = "Ganancias S/ ${"%.0f".format(state.earningsWalletBalance)} • Pasajero S/ ${"%.0f".format(state.passengerWalletBalance)} • Comisiones S/ ${"%.0f".format(state.commissionWalletBalance)}",
                             onClick = { nav.navigate(Route.WalletPayments) }
                         )
                         HorizontalDivider(color = OutlineSoft)
@@ -264,8 +265,15 @@ fun ProfileScreen(state: AppState, nav: AppNavigator) {
                         SettingsRow(
                             icon = Icons.Rounded.Shield,
                             title = "Seguridad y Emergencia",
-                            subtitle = "2 contactos de confianza asignados",
-                            onClick = { Toast.makeText(context, "Contactos de confianza activos", Toast.LENGTH_SHORT).show() }
+                            subtitle = "${state.emergencyContacts.size} contacto(s) de confianza asignados",
+                            onClick = { nav.navigate(Route.EmergencyContacts) }
+                        )
+                        HorizontalDivider(color = OutlineSoft)
+                        SettingsRow(
+                            icon = Icons.Rounded.Gavel,
+                            title = "Incidentes, Reportes y Descargos",
+                            subtitle = "${state.receivedReportCases.size} caso(s) para revisión • Plazo 7 días",
+                            onClick = { nav.navigate(Route.SafetyReports(initialTab = 2)) }
                         )
                     }
                 }
