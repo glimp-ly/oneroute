@@ -1,13 +1,14 @@
 package com.oneroute.core.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -18,7 +19,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.HelpOutline
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -28,28 +28,48 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.oneroute.R
 import com.oneroute.core.theme.CardSurface
 import com.oneroute.core.theme.PrimaryBlue
 import com.oneroute.core.theme.TextMuted
 import com.oneroute.core.theme.TextPrimary
 import com.oneroute.core.theme.TextSecondary
 
+val LocalOpenAppMenu = staticCompositionLocalOf<(() -> Unit)?> { null }
+
 @Composable
-fun BrandLogo(modifier: Modifier = Modifier, size: Int = 36) {
+fun BrandLogo(
+    modifier: Modifier = Modifier,
+    size: Int = 36,
+    onClick: (() -> Unit)? = null,
+    contentDescription: String = if (onClick != null) "Abrir menú" else "One Route"
+) {
+    val logoModifier = modifier
+        .size(size.dp)
+        .clip(CircleShape)
+        .background(PrimaryBlue)
+        .let { base ->
+            if (onClick != null) base.clickable(onClickLabel = "Abrir menú", onClick = onClick) else base
+        }
+
     Box(
-        modifier = modifier
-            .size(size.dp)
-            .clip(CircleShape)
-            .background(PrimaryBlue),
+        modifier = logoModifier,
         contentAlignment = Alignment.Center
     ) {
-        Icon(Icons.Rounded.Groups, contentDescription = "One Route", tint = Color.White, modifier = Modifier.size((size * 0.58f).dp))
+        Image(
+            painter = painterResource(id = R.drawable.oneroute_logo_high),
+            contentDescription = contentDescription,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
@@ -60,6 +80,7 @@ fun AppTopBar(
     subtitle: String? = null,
     onBack: (() -> Unit)? = null,
     showBrandLogo: Boolean = false,
+    onBrandLogoClick: (() -> Unit)? = null,
     onClose: (() -> Unit)? = null,
     onHelp: (() -> Unit)? = null,
     onNotifications: (() -> Unit)? = null,
@@ -82,7 +103,11 @@ fun AppTopBar(
                 }
             }
             if (showBrandLogo) {
-                BrandLogo(Modifier.padding(start = if (onBack == null) 4.dp else 0.dp))
+                val openMenu = onBrandLogoClick ?: LocalOpenAppMenu.current
+                BrandLogo(
+                    modifier = Modifier.padding(start = if (onBack == null) 4.dp else 0.dp),
+                    onClick = openMenu
+                )
                 Spacer(Modifier.width(10.dp))
             }
             Column(Modifier.weight(1f)) {

@@ -1,9 +1,18 @@
 package com.oneroute.core.navigation
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
+import com.oneroute.core.components.AppMenuDrawerContent
+import com.oneroute.core.components.LocalOpenAppMenu
 import com.oneroute.core.components.SkeletonContentHost
 import com.oneroute.core.components.SkeletonVariant
+import kotlinx.coroutines.launch
 import com.oneroute.feature.auth.ForgotPasswordScreen
 import com.oneroute.feature.auth.LoginScreen
 import com.oneroute.feature.auth.OnboardingScreen
@@ -43,23 +52,55 @@ private const val DEFAULT_LOADING_MS = 650L
 
 @Composable
 fun AppNavHost(state: AppState, nav: AppNavigator) {
-    BackHandler(enabled = nav.canGoBack) { nav.back() }
-
     val route = nav.current
+    val isAuth = route.isAuthRoute()
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(isAuth) {
+        if (isAuth && drawerState.isOpen) drawerState.close()
+    }
+
+    BackHandler(enabled = nav.canGoBack) { nav.back() }
+    BackHandler(enabled = drawerState.isOpen) { scope.launch { drawerState.close() } }
+
     val variant = route.skeletonVariant()
     val screen: @Composable () -> Unit = { RouteContent(route, state, nav) }
 
-    if (variant == null) {
-        screen()
-    } else {
-        SkeletonContentHost(
-            variant = variant,
-            contentKey = nav.entryId,
-            shouldAnimate = nav.lastWasForward,
-            durationMs = if (route == Route.Home) HOME_LOADING_MS else DEFAULT_LOADING_MS,
-            content = screen
-        )
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = !isAuth,
+        drawerContent = {
+            if (!isAuth) {
+                AppMenuDrawerContent(
+                    state = state,
+                    nav = nav,
+                    onClose = { scope.launch { drawerState.close() } }
+                )
+            }
+        }
+    ) {
+        CompositionLocalProvider(
+            LocalOpenAppMenu provides if (isAuth) null else ({ scope.launch { drawerState.open() } })
+        ) {
+            if (variant == null) {
+                screen()
+            } else {
+                SkeletonContentHost(
+                    variant = variant,
+                    contentKey = nav.entryId,
+                    shouldAnimate = nav.lastWasForward,
+                    durationMs = if (route == Route.Home) HOME_LOADING_MS else DEFAULT_LOADING_MS,
+                    content = screen
+                )
+            }
+        }
     }
+}
+
+private fun Route.isAuthRoute(): Boolean = when (this) {
+    Route.Splash, Route.Onboarding, Route.Login, Route.Register, Route.ForgotPassword, is Route.OtpNewPassword -> true
+    else -> false
 }
 
 @Composable
