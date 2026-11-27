@@ -9,9 +9,9 @@ Este documento define las reglas operativas para que **6 integrantes** (y asiste
 Antes de implementar una tarea en un módulo:
 1. Leer `00_README_CONTEXTO.md`, `01_ARQUITECTURA_Y_SHARED.md`, la sección de tu módulo en `03_MODULOS_Y_DIVISION_EQUIPO.md` y sus endpoints en `04_CONTRATO_API_Y_TIEMPO_REAL.md`.
 2. Verificar qué **archivos puedes modificar**:
-   - **Permitido libremente:** todo dentro de `internal/modules/<tu_modulo>/` y tus archivos de tests `*_test.go`.
-   - **Con coordinación:** `cmd/api/main.go` (solo para montar tus rutas si aún no están registradas).
-   - **Prohibido editar directamente** sin PR aprobado por el líder: `internal/shared/*`, `migrations/*`, `docker-compose.yml`, `.env.example` y carpetas `internal/modules/<otro_modulo>/`.
+   - **Permitido libremente:** todo dentro de `backend/internal/modules/<tu_modulo>/`, tus tests `*_test.go` y las pantallas asignadas dentro de `android/app/src/main/java/.../feature/<tu_feature>/`.
+   - **Con coordinación:** `backend/cmd/api/main.go`, `android/.../core/navigation/Route.kt` y `AppNavHost.kt`.
+   - **Prohibido editar directamente** sin PR aprobado por el líder: `backend/internal/shared/*`, `backend/*.sql`, `backend/docker-compose.yml`, `backend/.env.example` y módulos de otros integrantes.
 3. **Nunca escribir SQL `INSERT/UPDATE/DELETE` contra tablas de otro módulo.** Si falta un método en `shared/contracts`, pedirlo al líder o proponerlo en un PR separado hacia `shared/contracts`.
 
 ---
@@ -57,15 +57,16 @@ Antes de dar por cerrado un módulo, el repositorio debe contar con pruebas real
 
 ## 5. Pruebas con teléfonos Android físicos y despliegue en la nube
 
-### 5.1 Conexión desde `OneRouteAndroid`
-En `OneRouteAndroid` (`app/build.gradle.kts`):
+### 5.1 Conexión desde `android/`
+En `android/app/build.gradle.kts`:
 - Definir `buildConfigField("String", "API_BASE_URL", ...)` y `WS_URL` por `buildType` / `flavor`:
   - `localEmulator`: `http://10.0.2.2:8080/api/v1/`
   - `localLan` (teléfonos físicos en mismo Wi-Fi): `http://<IP_LAN_PC>:8080/api/v1/`
   - `stagingCloud`: `https://<TU_APP_EN_LA_NUBE>/api/v1/` (con `wss://...` para WebSockets).
 
 ### 5.2 Checklist de despliegue en nube (a definir proveedor: Railway / Render / Fly.io / VPS)
-1. Provisionar **PostgreSQL 16 con PostGIS habilitado** (`CREATE EXTENSION postgis; CREATE EXTENSION pgcrypto;`) y ejecutar `db_rutaCompartida.sql` + `seed_bd.sql` (y `seed_dev.sql` solo si es ambiente de pruebas/staging).
+1. Configurar **`Root Directory = backend`** en el servicio cloud del backend (para no redesplegar por cambios en `android/`).
+2. Provisionar **PostgreSQL 16 con PostGIS habilitado** (`CREATE EXTENSION postgis; CREATE EXTENSION pgcrypto;`) y ejecutar `backend/db_rutaCompartida.sql` + `backend/seed_bd.sql` (y `backend/seed_dev.sql` solo si es ambiente de pruebas/staging).
 2. Provisionar bucket S3 compatible (Cloudflare R2, AWS S3 o MinIO gestionado) con 1 bucket público y 1 privado.
 3. Configurar variables de entorno de producción (`.env.example` como plantilla):
    - `APP_ENV=production`

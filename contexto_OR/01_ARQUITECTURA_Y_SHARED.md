@@ -2,37 +2,43 @@
 
 ---
 
-## 1. Estructura de carpetas del repositorio Backend (Go)
+## 1. Estructura de carpetas del Monorepo y Backend (Go)
 
 ```text
-backend_oneroute/
-├── cmd/
-│   └── api/
-│       └── main.go                  # Wiring: carga config, conecta DB/MinIO/OSRM, inicia Hub/Scheduler y monta los 6 módulos
-├── internal/
-│   ├── shared/                      # <-- PROPIEDAD DEL LÍDER (solo PRs dedicados)
-│   │   ├── config/                  # Carga y validación de .env
-│   │   ├── db/                      # pgxpool, WithTx, mapeo de errores SQLSTATE/triggers
-│   │   ├── httpx/                   # Envelope JSON {data, meta, error}, middlewares, validator
-│   │   ├── auth/                    # JWT access/refresh, bcrypt, Claims, middlewares de rol/verificación
-│   │   ├── geo/                     # Helpers PostGIS + RoutingProvider (OSRM / Mock)
-│   │   ├── storage/                 # StorageProvider (MinIO / S3) + presigned URLs
-│   │   ├── realtime/                # WebSocket Hub (salas user/trip/reservation) + PushProvider
-│   │   ├── scheduler/               # Workers periódicos (60s holds, 24h créditos, 24h ratings, GPS 30d)
-│   │   ├── providers/               # Interfaces + mocks de PaymentGateway, IdentityProvider, OTPProvider
-│   │   └── contracts/               # Interfaces inter-módulo (WalletPort, BookingPort, TripPort, etc.)
-│   └── modules/                     # <-- 1 CARPETA POR INTEGRANTE (trabajo en paralelo sin colisiones)
-│       ├── auth_identity/           # handler.go, service.go, repository.go, dto.go, routes.go
-│       ├── routes_trips/
-│       ├── search_bookings/
-│       ├── active_trip_gps/
-│       ├── payments_wallets/
-│       └── messaging_safety_support/
-├── migrations/                      # Enlace o copia versionada de db_rutaCompartida.sql + seed_bd.sql
-├── docker-compose.yml
-├── .env.example
-├── go.mod
-└── Makefile
+oneroute/
+├── android/                         # Proyecto Android Studio (abrir esta subcarpeta en Android Studio)
+├── contexto_OR/                     # Documentacion tecnica compartida (este directorio)
+├── README.md
+└── backend/                         # Root Directory para despliegue del servidor Go
+    ├── cmd/
+    │   └── api/
+    │       └── main.go              # Wiring: carga config, conecta DB/MinIO/OSRM, inicia Hub/Scheduler y monta los 6 módulos
+    ├── internal/
+    │   ├── shared/                  # <-- PROPIEDAD DEL LÍDER (solo PRs dedicados)
+    │   │   ├── config/              # Carga y validación de .env
+    │   │   ├── db/                  # pgxpool, WithTx, mapeo de errores SQLSTATE/triggers
+    │   │   ├── httpx/               # Envelope JSON {data, meta, error}, middlewares, validator
+    │   │   ├── auth/                # JWT access/refresh, bcrypt, Claims, middlewares de rol/verificación
+    │   │   ├── geo/                 # Helpers PostGIS + RoutingProvider (OSRM / Mock)
+    │   │   ├── storage/             # StorageProvider (MinIO / S3) + presigned URLs
+    │   │   ├── realtime/            # WebSocket Hub (salas user/trip/reservation) + PushProvider
+    │   │   ├── scheduler/           # Workers periódicos (60s holds, 24h créditos, 24h ratings, GPS 30d)
+    │   │   ├── providers/           # Interfaces + mocks de PaymentGateway, IdentityProvider, OTPProvider
+    │   │   └── contracts/           # Interfaces inter-módulo (WalletPort, BookingPort, TripPort, etc.)
+    │   └── modules/                 # <-- 1 CARPETA POR INTEGRANTE (trabajo en paralelo sin colisiones)
+    │       ├── auth_identity/       # handler.go, service.go, repository.go, dto.go, routes.go
+    │       ├── routes_trips/
+    │       ├── search_bookings/
+    │       ├── active_trip_gps/
+    │       ├── payments_wallets/
+    │       └── messaging_safety_support/
+    ├── db_rutaCompartida.sql
+    ├── seed_bd.sql
+    ├── seed_dev.sql
+    ├── docker-compose.yml
+    ├── .env.example
+    ├── go.mod
+    └── Makefile
 ```
 
 Cada módulo sigue internamente el mismo patrón de 4 capas:

@@ -1,6 +1,6 @@
 # Entorno Local con Docker, Base de Datos y Seeds
 
-Este documento explica en detalle cómo está armado el entorno Docker en `docker-compose.yml`, el flujo de inicialización automática de PostgreSQL + PostGIS, los datos precargados en `seed_bd.sql` y `seed_dev.sql`, y cómo conectarse desde el backend Go y desde **teléfonos Android físicos**.
+Este documento explica en detalle cómo está armado el entorno Docker en `backend/docker-compose.yml`, el flujo de inicialización automática de PostgreSQL + PostGIS, los datos precargados en `backend/seed_bd.sql` y `backend/seed_dev.sql`, y cómo conectarse desde el backend Go y desde **teléfonos Android físicos**. Todos los comandos `docker compose` siguientes se ejecutan dentro de `oneroute/backend/`.
 
 ---
 

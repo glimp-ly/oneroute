@@ -1,4 +1,4 @@
-# Archivos generados y compilados
+# Archivos generados y compilados (Android / Kotlin / Go)
 *.apk
 *.aar
 *.aab
@@ -9,13 +9,16 @@ gen/
 out/
 release/
 
-# Gradle y Cachés de Build
+# Gradle y caches de build
 .gradle/
+.kotlin/
 build/
 */build/
+**/build/
 
-# Configuración de máquina local (Ruta del Android SDK, NDK, etc.)
+# Configuracion local de maquina (Android SDK, NDK, etc.)
 local.properties
+android/local.properties
 
 # Android Studio
 .idea/
@@ -27,15 +30,20 @@ captures/
 .externalNativeBuild/
 .cxx/
 
-# Claves de firma y credenciales
+# Claves de firma, secretos y variables de entorno
 *.jks
 *.keystore
 *.key
 google-services.json
+.env
+backend/.env
 
-# Archivos de sistema operativo
+# Datos locales de Docker / OSRM
+osrm-data/
+backend/osrm-data/
+
+# Archivos temporales y sistema operativo
+*.tmp
+*.log
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log

@@ -1,6 +1,6 @@
 # RutaCompartida / OneRoute — Contexto Técnico Maestro
 
-Este directorio (`contexto_OR/`) es la **fuente única de verdad** para el equipo de **6 integrantes** y para cualquier agente de IA que participe en el desarrollo del backend en **Go** y su integración con **PostgreSQL 16 + PostGIS** y la aplicación móvil en **Kotlin (`OneRouteAndroid`)**.
+Este directorio (`contexto_OR/`) es la **fuente única de verdad** del monorepo `oneroute/` para el equipo de **6 integrantes** y para cualquier agente de IA que participe en el desarrollo del backend en **Go** (`backend/`), la base de datos **PostgreSQL 16 + PostGIS** (`backend/*.sql`) y la aplicación móvil en **Kotlin (`android/`)**.
 
 > **Importante:** Antes de escribir código o abrir una rama, todo integrante o agente debe leer este documento, `01_ARQUITECTURA_Y_SHARED.md`, `03_MODULOS_Y_DIVISION_EQUIPO.md` (en especial su módulo asignado) y `06_GUIA_AGENTES_Y_PRUEBAS.md`.
 
@@ -24,9 +24,9 @@ Este directorio (`contexto_OR/`) es la **fuente única de verdad** para el equip
 
 | Capa | Tecnología | Notas clave |
 |---|---|---|
-| **App Móvil** | **Kotlin + Jetpack Compose (Material 3)** | Proyecto existente en `OneRouteAndroid` (`minSdk 29`, `compileSdk 37`, AGP `9.4.1`, Kotlin `2.2.10`). |
-| **Backend API & Realtime** | **Go 1.23+** (monolito modular) | Router `chi/v5`, driver `pgx/v5` (`pgxpool`), `golang-jwt/jwt/v5`, `gorilla/websocket`, `minio-go/v7`, `golang-migrate`. |
-| **Base de Datos** | **PostgreSQL 16 + PostGIS 3.4 + pgcrypto** | Esquema en `../db_rutaCompartida.sql` (**73 tablas**, 17 índices `GIST`, 23 triggers, 16 funciones, 4 vistas) + `../seed_bd.sql` + `../seed_dev.sql`. |
+| **App Móvil** | **Kotlin + Jetpack Compose (Material 3)** | Subproyecto en `android/` (`minSdk 29`, `compileSdk 37`, AGP `9.4.1`, Kotlin `2.2.10`). |
+| **Backend API & Realtime** | **Go 1.23+** (monolito modular) | Subproyecto en `backend/`: router `chi/v5`, driver `pgx/v5` (`pgxpool`), `golang-jwt/jwt/v5`, `gorilla/websocket`, `minio-go/v7`, `golang-migrate`. |
+| **Base de Datos** | **PostgreSQL 16 + PostGIS 3.4 + pgcrypto** | Esquema en `../backend/db_rutaCompartida.sql` (**73 tablas**, 17 índices `GIST`, 23 triggers, 16 funciones, 4 vistas) + `../backend/seed_bd.sql` + `../backend/seed_dev.sql`. |
 | **Ruteo y Polilíneas** | **OSRM** + PostGIS | OSRM público (`router.project-osrm.org`) para MVP sin fricción, con soporte plug-and-play para OSRM local en Docker (`--profile osrm-local`) y mock offline. |
 | **Almacenamiento** | **MinIO (S3-compatible)** | Bucket público (`rutacompartida-public`) y privado con URLs firmadas (`rutacompartida-private`). |
 | **Correos / OTP Dev** | **Mailpit (SMTP + UI Web)** | Captura OTPs en `http://localhost:8025` e imprime en consola en `APP_ENV=development`. |
