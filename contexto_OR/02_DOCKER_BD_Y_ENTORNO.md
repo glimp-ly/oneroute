@@ -10,8 +10,8 @@ Este documento explica en detalle cómo está armado el entorno Docker en `backe
 |---|---|---|---|
 | `postgres` | `postgis/postgis:16-3.4` | `5432:5432` | Base de datos PostgreSQL 16 con extensión **PostGIS 3.4** y `pgcrypto`. Ejecuta automáticamente el esquema y seeds en el primer arranque. |
 | `mailpit` | `axllent/mailpit:latest` | `1025` (SMTP)<br>`8025` (Web UI) | Servidor SMTP local para capturar correos y códigos OTP enviados en desarrollo (`http://localhost:8025`). |
-| `minio` | `minio/minio:latest` | `9000` (API S3)<br>`9001` (Consola) | Almacenamiento de objetos compatible con S3 para fotos, DNI y documentos (`http://localhost:9001`). |
-| `minio-init` | `minio/mc:latest` | — | Contenedor efímero que espera a `minio` (`service_healthy`) y crea automáticamente los buckets `rutacompartida-public` (descarga pública) y `rutacompartida-private` (solo presigned URLs). |
+| `minio` | `coollabsio/minio:latest` | `9000` (API S3)<br>`9001` (Consola) | Almacenamiento de objetos compatible con S3 para fotos, DNI y documentos (`http://localhost:9001`). |
+| `minio-init` | `coollabsio/minio:latest` | — | Contenedor efímero que espera a `minio` (`service_healthy`) y crea automáticamente los buckets `rutacompartida-public` (descarga pública) y `rutacompartida-private` (solo presigned URLs). |
 | `osrm` *(opcional)* | `ghcr.io/project-osrm/osrm-backend:latest` | `5000:5000` | Motor de ruteo local bajo `profiles: ["osrm-local"]`. Solo arranca si se solicita explícitamente; por defecto el MVP usa `ROUTING_PROVIDER=osrm_public`. |
 
 Red común: `rutacompartida_net` (`bridge`). Volúmenes persistentes: `pg_data` y `minio_data`.

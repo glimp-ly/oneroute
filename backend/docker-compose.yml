@@ -34,7 +34,7 @@ services:
       - rutacompartida_net
 
   minio:
-    image: minio/minio:latest
+    image: coollabsio/minio:latest
     container_name: rutacompartida_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -55,7 +55,7 @@ services:
       - rutacompartida_net
 
   minio-init:
-    image: minio/mc:latest
+    image: coollabsio/minio:latest
     container_name: rutacompartida_minio_init
     depends_on:
       minio:
