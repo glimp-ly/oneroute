@@ -22,5 +22,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "OneRouteAndroid"
+rootProject.name = "OneRoute"
 include(":app")

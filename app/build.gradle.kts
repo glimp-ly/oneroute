@@ -4,13 +4,13 @@ plugins {
 }
 
 android {
-    namespace = "com.onerouteandroid.oneroute"
+    namespace = "com.oneroute"
     compileSdk {
         version = release(37)
     }
 
     defaultConfig {
-        applicationId = "com.onerouteandroid.oneroute"
+        applicationId = "com.oneroute"
         minSdk = 29
         targetSdk = 37
         versionCode = 1
