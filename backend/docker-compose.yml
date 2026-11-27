@@ -1,0 +1,101 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: rutacompartida_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rutacompartida}
+      POSTGRES_USER: ${POSTGRES_USER:-rutacompartida}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rutacompartida_dev_pass}
+      TZ: ${APP_TIMEZONE:-America/Lima}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db_rutaCompartida.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./seed_bd.sql:/docker-entrypoint-initdb.d/02_seed_catalogs.sql:ro
+      - ./seed_dev.sql:/docker-entrypoint-initdb.d/03_seed_dev.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rutacompartida} -d ${POSTGRES_DB:-rutacompartida}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - rutacompartida_net
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: rutacompartida_mailpit
+    restart: unless-stopped
+    ports:
+      - "${SMTP_PORT:-1025}:1025"
+      - "8025:8025"
+    networks:
+      - rutacompartida_net
+
+  minio:
+    image: minio/minio:latest
+    container_name: rutacompartida_minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-minioadmin123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - rutacompartida_net
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: rutacompartida_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${STORAGE_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${STORAGE_SECRET_KEY:-minioadmin123}
+      BUCKET_PUBLIC: ${STORAGE_BUCKET_PUBLIC:-rutacompartida-public}
+      BUCKET_PRIVATE: ${STORAGE_BUCKET_PRIVATE:-rutacompartida-private}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 $$MINIO_ROOT_USER $$MINIO_ROOT_PASSWORD &&
+      mc mb --ignore-existing local/$$BUCKET_PUBLIC &&
+      mc mb --ignore-existing local/$$BUCKET_PRIVATE &&
+      mc anonymous set download local/$$BUCKET_PUBLIC &&
+      mc anonymous set none local/$$BUCKET_PRIVATE &&
+      exit 0
+      "
+    networks:
+      - rutacompartida_net
+
+  # Motor de ruteo OSRM local (opcional para el MVP; activar con --profile osrm-local)
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    container_name: rutacompartida_osrm
+    profiles:
+      - osrm-local
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./osrm-data:/data:ro
+    command: osrm-routed --algorithm mld /data/peru-latest.osrm
+    networks:
+      - rutacompartida_net
+
+volumes:
+  pg_data:
+  minio_data:
+
+networks:
+  rutacompartida_net:
+    driver: bridge
