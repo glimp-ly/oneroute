@@ -1,0 +1,4 @@
+.env
+osrm-data/
+*.tmp
+.DS_Store
