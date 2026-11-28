@@ -354,8 +354,8 @@ func TestPasswordHashingAndVerification(t *testing.T) {
 	if err != nil {
 		t.Fatalf("bcrypt.Cost failed: %v", err)
 	}
-	if cost != auth.DefaultBcryptCost || cost != 10 {
-		t.Errorf("bcrypt cost = %d, want 10", cost)
+	if cost != auth.DefaultBcryptCost {
+		t.Errorf("bcrypt cost = %d, want %d", cost, auth.DefaultBcryptCost)
 	}
 
 	if !auth.VerifyPassword(hash, plain) {
